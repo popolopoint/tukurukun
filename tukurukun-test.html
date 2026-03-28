@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-    <title>コース作るくん v7.3.1 by Popolo App.com</title>
+    <title>コース作るくん v7.3.2 by Popolo App.com</title>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAHhxSJK-IhYiT9XBRwE1MX7DHhghBQQQk&callback=initMap" async defer></script>
 
     <style>
@@ -20,34 +20,22 @@
         .input-group { display: flex; flex-direction: column; }
         .input-group label { font-size: 9px; font-weight: bold; color: #888; margin-bottom: 2px; text-align: center; }
         .input-group input, .input-group select { font-size: 14px; padding: 5px; border: 1px solid #ccc; border-radius: 6px; text-align: center; width: 100%; box-sizing: border-box; height: 32px; }
-        .btn-action { background: #eee; border: 1px solid #ccc; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 12px; height: 100%; }
-        .btn-delete { background: var(--red); color: white; border: none; }
         .point-selector { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px; justify-content: center; background: #fff; border-bottom: 1px solid #ddd; z-index: 100; }
         .btn-point { width: 36px; height: 36px; border-radius: 50%; border: 1px solid #ccc; background: white; font-weight: bold; cursor: pointer; font-size: 14px; }
         .btn-point.active { border: 2px solid var(--blue); background: var(--blue); color: white; }
         .btn-point.set { border-color: #555; background: #f0f0f0; }
         #map-container { flex: 1; width: 100%; position: relative; overflow: hidden; }
         #map { height: 100%; width: 100%; }
-        .controls { padding: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; background: #fff; border-top: 1px solid #ddd; z-index: 100; flex-shrink: 0; }
+        .controls { padding: 10px; display: grid; grid-template-columns: 1fr; gap: 10px; background: #fff; border-top: 1px solid #ddd; z-index: 100; flex-shrink: 0; }
         .btn-main { padding: 12px; border-radius: 8px; border: none; color: white; font-weight: bold; font-size: 16px; cursor: pointer; }
-        .btn-create { background: var(--blue); grid-column: span 2; }
-        
-        /* Modal & Markers CSS (省略なし) */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 20px; border-radius: 12px; width: 85%; max-width: 320px; }
-        .modal-header { font-weight: bold; font-size: 18px; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 8px; }
-        .modal-section { margin-bottom: 12px; }
-        .modal-section-title { font-size: 12px; font-weight: bold; color: #888; margin-bottom: 5px; }
-        .selector-group { display: flex; flex-wrap: wrap; gap: 8px; }
-        .select-item { width: 30px; height: 30px; border: 2px solid #ccc; cursor: pointer; box-sizing: border-box; position: relative; }
-        .btn-modal-close { width: 100%; padding: 12px; background: var(--blue); color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; margin-top: 10px; }
+        .btn-create { background: var(--blue); }
     </style>
 </head>
 <body>
 
 <div class="header">
     <span class="title">コース作るくん</span>
-    <span class="version">v7.3.1 by Popolo App.com</span>
+    <span class="version">v7.3.2 by Popolo App.com</span>
 </div>
 
 <div class="config-panel">
@@ -83,7 +71,6 @@
 
 <div id="map-container">
     <div id="map"></div>
-    <canvas id="draw-canvas" style="position:absolute; top:0; left:0; z-index:1000; display:none; touch-action:none;"></canvas>
 </div>
 
 <div class="controls">
@@ -93,7 +80,7 @@
 <script>
 let map, activePoint = 'A';
 let markers = {}; 
-let startLine = null, finishLine = null;
+let startLine = null;
 const pointData = {
     S: { latlng: null }, A: { latlng: null }, B: { latlng: null }, C: { latlng: null },
     D: { latlng: null }, E: { latlng: null }, F: { latlng: null }, G: { latlng: null },
@@ -115,13 +102,26 @@ function initMap() {
     });
 }
 
-
+// 先に計算用関数を定義
+function movePoint(base, dist, brngDeg) {
+    const R = 6378137;
+    const brng = brngDeg * Math.PI / 180;
+    const lat1 = base.lat * Math.PI / 180;
+    const lng1 = base.lng * Math.PI / 180;
+    const dR = dist / R;
+    const lat2 = Math.asin(Math.sin(lat1) * Math.cos(dR) + Math.cos(lat1) * Math.sin(dR) * Math.cos(brng));
+    const lng2 = lng1 + Math.atan2(Math.sin(brng) * Math.sin(dR) * Math.cos(lat1), Math.cos(dR) - Math.sin(lat1) * Math.sin(lat2));
+    return { lat: lat2 * 180 / Math.PI, lng: lng2 * 180 / Math.PI };
+}
 
 function setPoint(label, latLng) {
-    const pos = latLng.lat ? { lat: latLng.lat(), lng: latLng.lng() } : latLng;
+    // 引数が google.maps.LatLng の場合と、プレーンなオブジェクトの場合の両方に対応
+    const pos = (typeof latLng.lat === 'function') ? { lat: latLng.lat(), lng: latLng.lng() } : latLng;
     pointData[label].latlng = pos;
+    
     const btn = document.querySelector(`.btn-point[data-point="${label}"]`);
     if(btn) btn.classList.add('set');
+
     if (markers[label]) {
         markers[label].setPosition(pos);
     } else {
@@ -129,11 +129,12 @@ function setPoint(label, latLng) {
             position: pos, map: map, draggable: true,
             label: { text: label, color: 'white', fontWeight: 'bold' }
         });
-        markers[label].addListener('dragend', (e) => pointData[label].latlng = { lat: e.latLng.lat(), lng: e.latLng.lng() });
+        markers[label].addListener('dragend', (e) => {
+            pointData[label].latlng = { lat: e.latLng.lat(), lng: e.latLng.lng() };
+        });
     }
 }
 
-// 修正版 generateCourse 関数
 function generateCourse() {
     const baseLabel = document.getElementById('basePoint').value;
     const baseLatLng = pointData[baseLabel].latlng;
@@ -151,68 +152,46 @@ function generateCourse() {
     const points = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
     const baseIdx = points.indexOf(baseLabel);
 
-    // 1. Aが基準、またはAより後の計算の場合、Sを配置 (Aの北側/南側に配置)
-    if (baseIdx >= 0) { // Aが含まれるリスト
-        const posA = pointData['A'].latlng;
-        if (posA) {
-            const brngS = (twd + 180) % 360;
-            const posS = movePoint(posA, distAS, brngS);
-            setPoint('S', posS);
-        }
-    }
+    // 1. Aの位置を確定（基準点から逆算または順算）
+    // 前順のループでAまで戻ることで、基準点がどこであってもAの位置が確定する
 
-    // 2. 基準点から順次「後順」の点を計算
-    for (let i = baseIdx; i < points.length - 1; i++) {
-        const currentLabel = points[i];
-        const nextLabel = points[i + 1];
-        
-        // 偶数番目(A,C,E...)は右へ、奇数番目(B,D,F...)は左へ（またはその逆）
-        // 角度thetaを考慮した進行方向
-        const brng = (i % 2 === 0) ? (twd + 90 + theta) : (twd + 270 - theta);
-        
-        const currentPos = pointData[currentLabel].latlng;
-        if (currentPos) {
-            const nextPos = movePoint(currentPos, dist, brng);
-            setPoint(nextLabel, nextPos);
-        }
-    }
-
-    // 3. 基準点から「前順」の点を逆算 (例: Bが基準ならAを計算)
+    // 2. 基準点から「前順」を計算
     for (let i = baseIdx; i > 0; i--) {
         const currentLabel = points[i];
         const prevLabel = points[i - 1];
-        
         const revBrng = ((i - 1) % 2 === 0) ? (twd + 270 - theta) : (twd + 90 + theta);
-        
         const currentPos = pointData[currentLabel].latlng;
         if (currentPos) {
-            const prevPos = movePoint(currentPos, dist, revBrng);
-            setPoint(prevLabel, prevPos);
+            setPoint(prevLabel, movePoint(currentPos, dist, revBrng));
         }
+    }
+
+    // 3. 基準点から「後順」を計算
+    for (let i = baseIdx; i < points.length - 1; i++) {
+        const currentLabel = points[i];
+        const nextLabel = points[i + 1];
+        const brng = (i % 2 === 0) ? (twd + 90 + theta) : (twd + 270 - theta);
+        const currentPos = pointData[currentLabel].latlng;
+        if (currentPos) {
+            setPoint(nextLabel, movePoint(currentPos, dist, brng));
+        }
+    }
+
+    // 4. 確定したAを元にSを配置
+    if (pointData['A'].latlng) {
+        setPoint('S', movePoint(pointData['A'].latlng, distAS, (twd + 180) % 360));
     }
 
     drawRaceLines();
 }
 
-// 併せて movePoint も整理しました
-function movePoint(base, dist, brngDeg) {
-    const R = 6378137;
-    const brng = brngDeg * Math.PI / 180;
-    const lat1 = base.lat * Math.PI / 180;
-    const lng1 = base.lng * Math.PI / 180;
-    const dR = dist / R;
-
-    const lat2 = Math.asin(Math.sin(lat1) * Math.cos(dR) + Math.cos(lat1) * Math.sin(dR) * Math.cos(brng));
-    const lng2 = lng1 + Math.atan2(Math.sin(brng) * Math.sin(dR) * Math.cos(lat1), Math.cos(dR) - Math.sin(lat1) * Math.sin(lat2));
-
-    return { lat: lat2 * 180 / Math.PI, lng: lng2 * 180 / Math.PI };
-}
-
 function drawRaceLines() {
     if (startLine) startLine.setMap(null);
-    const style = { strokeColor: '#333', strokeWeight: 2, strokeOpacity: 0.8 };
     if (pointData.S.latlng && pointData.A.latlng) {
-        startLine = new google.maps.Polyline({ path: [pointData.S.latlng, pointData.A.latlng], ...style, map: map });
+        startLine = new google.maps.Polyline({
+            path: [pointData.S.latlng, pointData.A.latlng],
+            strokeColor: '#333', strokeWeight: 2, strokeOpacity: 0.8, map: map
+        });
     }
 }
 </script>
