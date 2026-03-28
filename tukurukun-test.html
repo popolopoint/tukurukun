@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-    <title>コース作るくん v7.2.7 by Popolo App.com</title>
+    <title>コース作るくん v7.2.8 by Popolo App.com</title>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAHhxSJK-IhYiT9XBRwE1MX7DHhghBQQQk&callback=initMap" async defer></script>
 
     <style>
@@ -59,7 +59,7 @@
 
 <div class="header">
     <span class="title">コース作るくん</span>
-    <span class="version">v7.2.7 by Popolo App.com</span>
+    <span class="version">v7.2.8 by Popolo App.com</span>
 </div>
 
 
@@ -143,7 +143,6 @@
         <button class="btn-modal-close" onclick="closeModal()">決定</button>
     </div>
 </div>
-
 <script>
 let map, activePoint = 'A';
 let markers = {}; 
@@ -171,6 +170,7 @@ const COLOR_MAP = {
     orange: 'var(--buoy-orange)', white: 'var(--buoy-white)', purple: 'var(--buoy-purple)', skyblue: 'var(--buoy-skyblue)'
 };
 
+// 1. 地図の初期化
 function initMap() {
     map = new google.maps.Map(document.getElementById('map'), {
         center: { lat: 26.3318, lng: 127.9179 },
@@ -183,44 +183,36 @@ function initMap() {
 
     map.addListener('click', (e) => setPoint(activePoint, e.latLng));
 
+    // ポイント切替ボタンのイベント設定（initMap内に移動）
+    document.querySelectorAll('.btn-point').forEach(btn => {
+        btn.onclick = function() {
+            document.querySelectorAll('.btn-point').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            activePoint = this.dataset.point;
 
-// initMap関数内のボタン設定部分を探して書き換え
-document.querySelectorAll('.btn-point').forEach(btn => {
-    btn.onclick = function() {
-        document.querySelectorAll('.btn-point').forEach(b => b.classList.remove('active'));
-        this.classList.add('active');
-        activePoint = this.dataset.point;
-
-        // --- 追加：ラベルの書き換え ---
-        const labelEl = document.getElementById('distLabel');
-        if (activePoint === 'S' || activePoint === 'A' || activePoint === 'N') {
-            labelEl.innerText = "AB距離(m)"; // デフォルト
-        } else {
-            // 前のアルファベットを取得して「BC距離」などの表示にする
-            const prevPoint = String.fromCharCode(activePoint.charCodeAt(0) - 1);
-            labelEl.innerText = prevPoint + activePoint + "距離(m)";
-        }
-    };
-});
-
-
-
+            const labelEl = document.getElementById('distLabel');
+            if (activePoint === 'S' || activePoint === 'A' || activePoint === 'N') {
+                labelEl.innerText = "AB距離(m)";
+            } else {
+                const prevPoint = String.fromCharCode(activePoint.charCodeAt(0) - 1);
+                labelEl.innerText = prevPoint + activePoint + "距離(m)";
+            }
+        };
+    });
 }
 
-
-
-function getIconContent(label, data) {
-    const colorVal = COLOR_MAP[data.color] || '#333';
-    if (data.type === 'buoy') {
-        if (data.shape === 'triangle') {
-            return `<div class="marker-base buoy-triangle" style="background:${colorVal};"><span class="marker-label" style="top:14px;">${label}</span></div>`;
-        }
-        const shapeClass = data.shape === 'square' ? 'buoy-square' : 'buoy-circle';
-        return `<div class="marker-base ${shapeClass}" style="background:${colorVal};"><span class="marker-label">${label}</span></div>`;
-    } else {
-        const boatClass = data.shape === 'fishing' ? 'boat-fishing' : 'boat-rib';
-        return `<div class="marker-base ${boatClass}"><span class="marker-label" style="color:#000; text-shadow:none; top:-18px;">${label}</span></div>`;
-    }
+// 2. 距離と方位から新しい座標を計算する関数（これが抜けていたためエラーが出ていました）
+function movePoint(base, dist, brngDeg) {
+    const R = 6378137; 
+    const brng = brngDeg * Math.PI / 180;
+    const φ1 = base.lat * Math.PI / 180; 
+    const λ1 = base.lng * Math.PI / 180; 
+    const δ = dist / R;
+    
+    const φ2 = Math.asin(Math.sin(φ1) * Math.cos(δ) + Math.cos(φ1) * Math.sin(δ) * Math.cos(brng));
+    const λ2 = λ1 + Math.atan2(Math.sin(brng) * Math.sin(δ) * Math.cos(φ1), Math.cos(δ) - Math.sin(φ1) * Math.sin(φ2));
+    
+    return { lat: φ2 * 180 / Math.PI, lng: λ2 * 180 / Math.PI };
 }
 
 function setPoint(label, latLng) {
@@ -235,11 +227,8 @@ function setPoint(label, latLng) {
             position: latLng,
             map: map,
             draggable: true,
-            optimized: false // HTMLコンテンツを表示するために必要
+            label: { text: label, color: 'white', fontWeight: 'bold' }
         });
-
-        // カスタム要素をマーカーとして扱うための簡易的な実装
-        updateMarkerAppearance(marker, label);
 
         marker.addListener('click', () => openModal(label));
         marker.addListener('dragend', (e) => {
@@ -249,47 +238,6 @@ function setPoint(label, latLng) {
     }
 }
 
-function updateMarkerAppearance(marker, label) {
-    const data = pointData[label];
-    const content = getIconContent(label, data);
-    // Google MapsでHTMLアイコンを扱うにはOverlayViewが必要ですが、
-    // ここでは標準MarkerのLabel機能やIconプロパティを模倣した対応を行います。
-    marker.setIcon({
-        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"></svg>`),
-        anchor: new google.maps.Point(20, 20)
-    });
-    marker.setLabel({
-        text: label,
-        color: 'white',
-        fontWeight: 'bold'
-    });
-}
-
-function drawRaceLines() {
-    if (startLine) startLine.setMap(null);
-    if (finishLine) finishLine.setMap(null);
-
-    const style = { strokeColor: '#333', strokeWeight: 2, strokeOpacity: 0.8 };
-
-    if (pointData.S.latlng && pointData.A.latlng) {
-        startLine = new google.maps.Polyline({
-            path: [pointData.S.latlng, pointData.A.latlng],
-            ...style, map: map
-        });
-    }
-
-    if (pointData[finishTarget]?.latlng && pointData.N.latlng) {
-        finishLine = new google.maps.Polyline({
-            path: [pointData[finishTarget].latlng, pointData.N.latlng],
-            ...style, map: map
-        });
-    }
-}
-
-// --- 以下、モーダル・手書き等のロジックはGoogle Maps向けに調整して継続 ---
-// (canvas等のロジックはLeaflet非依存のためそのまま動作します)
-
-// スクリプト後半にある calculate 関数を以下に書き換え
 function calculate(isPort) {
     if (!pointData.A.latlng) {
         alert("まずA点を配置してください。");
@@ -306,7 +254,7 @@ function calculate(isPort) {
     const posS = movePoint(pointData.A.latlng, distAS, brngS);
     setPoint('S', new google.maps.LatLng(posS.lat, posS.lng));
 
-    // activePointがA以外のとき、その前の点を基準に計算
+    // 前の点を特定
     let basePointLabel = 'A'; 
     if (activePoint !== 'A' && activePoint !== 'S' && activePoint !== 'N') {
         basePointLabel = String.fromCharCode(activePoint.charCodeAt(0) - 1);
@@ -325,9 +273,25 @@ function calculate(isPort) {
     drawRaceLines();
 }
 
+function drawRaceLines() {
+    if (startLine) startLine.setMap(null);
+    if (finishLine) finishLine.setMap(null);
+    const style = { strokeColor: '#333', strokeWeight: 2, strokeOpacity: 0.8 };
 
+    if (pointData.S.latlng && pointData.A.latlng) {
+        startLine = new google.maps.Polyline({
+            path: [pointData.S.latlng, pointData.A.latlng],
+            ...style, map: map
+        });
+    }
+    if (pointData[finishTarget]?.latlng && pointData.N.latlng) {
+        finishLine = new google.maps.Polyline({
+            path: [pointData[finishTarget].latlng, pointData.N.latlng],
+            ...style, map: map
+        });
+    }
+}
 
-// モーダル表示等の関数 (closeModal, openModal, toggleDrawModeなど) は前回のロジックを継承
 function openModal(label) {
     currentEditingPoint = label;
     document.getElementById('modalPointLabel').innerText = label;
@@ -340,9 +304,7 @@ function toggleDrawMode() {
     const isVisible = canvas.style.display === 'block';
     canvas.style.display = isVisible ? 'none' : 'block';
     map.setOptions({ gestureHandling: isVisible ? 'greedy' : 'none' });
-    if (!isVisible) initCanvas();
 }
-// ...その他UI関数...
 </script>
 </body>
 </html>
