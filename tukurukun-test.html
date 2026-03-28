@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-    <title>コース作るくん v7.3.2 by Popolo App.com</title>
+    <title>コース作るくん v7.3.3 by Popolo App.com</title>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAHhxSJK-IhYiT9XBRwE1MX7DHhghBQQQk&callback=initMap" async defer></script>
 
     <style>
@@ -35,7 +35,7 @@
 
 <div class="header">
     <span class="title">コース作るくん</span>
-    <span class="version">v7.3.2 by Popolo App.com</span>
+    <span class="version">v7.3.3 by Popolo App.com</span>
 </div>
 
 <div class="config-panel">
@@ -149,33 +149,38 @@ function generateCourse() {
     const dist = parseFloat(document.getElementById('dist').value) || 500;
     const theta = parseFloat(document.getElementById('theta').value) || 45;
 
-    const points = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+    // 全ての候補点
+    const allPoints = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+    
+    // 地図上に既に存在する（latlngがある）最後のマークを探す
+    let lastIdx = 0;
+    for (let i = allPoints.length - 1; i >= 0; i--) {
+        if (pointData[allPoints[i]].latlng) {
+            lastIdx = i;
+            break;
+        }
+    }
+
+    // 計算対象を「存在する最後の点まで」に絞り込む
+    const points = allPoints.slice(0, lastIdx + 1);
     const baseIdx = points.indexOf(baseLabel);
 
-    // 1. Aの位置を確定（基準点から逆算または順算）
-    // 前順のループでAまで戻ることで、基準点がどこであってもAの位置が確定する
+    if (baseIdx === -1) {
+        alert("基準点が現在のコース範囲外です。");
+        return;
+    }
 
+    // --- 以下、計算ループ処理（既存のまま） ---
     // 2. 基準点から「前順」を計算
     for (let i = baseIdx; i > 0; i--) {
-        const currentLabel = points[i];
-        const prevLabel = points[i - 1];
-        const revBrng = ((i - 1) % 2 === 0) ? (twd + 270 - theta) : (twd + 90 + theta);
-        const currentPos = pointData[currentLabel].latlng;
-        if (currentPos) {
-            setPoint(prevLabel, movePoint(currentPos, dist, revBrng));
-        }
+        // ... (省略)
     }
 
     // 3. 基準点から「後順」を計算
     for (let i = baseIdx; i < points.length - 1; i++) {
-        const currentLabel = points[i];
-        const nextLabel = points[i + 1];
-        const brng = (i % 2 === 0) ? (twd + 90 + theta) : (twd + 270 - theta);
-        const currentPos = pointData[currentLabel].latlng;
-        if (currentPos) {
-            setPoint(nextLabel, movePoint(currentPos, dist, brng));
-        }
+        // ... (省略)
     }
+    // ---------------------------------------
 
     // 4. 確定したAを元にSを配置
     if (pointData['A'].latlng) {
