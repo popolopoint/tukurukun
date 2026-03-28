@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-    <title>コース作るくん v7.2.6 by Popolo App.com</title>
+    <title>コース作るくん v7.2.7 by Popolo App.com</title>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAHhxSJK-IhYiT9XBRwE1MX7DHhghBQQQk&callback=initMap" async defer></script>
 
     <style>
@@ -59,16 +59,17 @@
 
 <div class="header">
     <span class="title">コース作るくん</span>
-    <span class="version">v7.2.6 by Popolo App.com</span>
+    <span class="version">v7.2.7 by Popolo App.com</span>
 </div>
 
 
 <div class="config-panel" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
     <div class="input-group"><label>風向(TWD)</label><input type="number" id="wind" value="0"></div>
     <div class="input-group"><label>AS距離(m)</label><input type="number" id="distAS" value="100"></div>
-    <div class="input-group"><label>AB距離(m)</label><input type="number" id="distAB" value="500"></div>
+    <div class="input-group"><label id="distLabel">AB距離(m)</label><input type="number" id="dist" value="500"></div>
     <div class="input-group"><label>角度(°)</label><input type="number" id="theta" value="5"></div>
 </div>
+
 
 <div class="point-selector" id="selector">
     <button class="btn-point" data-point="S">S</button> 
@@ -182,14 +183,31 @@ function initMap() {
 
     map.addListener('click', (e) => setPoint(activePoint, e.latLng));
 
-    document.querySelectorAll('.btn-point').forEach(btn => {
-        btn.onclick = function() {
-            document.querySelectorAll('.btn-point').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            activePoint = this.dataset.point;
-        };
-    });
+
+// initMap関数内のボタン設定部分を探して書き換え
+document.querySelectorAll('.btn-point').forEach(btn => {
+    btn.onclick = function() {
+        document.querySelectorAll('.btn-point').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        activePoint = this.dataset.point;
+
+        // --- 追加：ラベルの書き換え ---
+        const labelEl = document.getElementById('distLabel');
+        if (activePoint === 'S' || activePoint === 'A' || activePoint === 'N') {
+            labelEl.innerText = "AB距離(m)"; // デフォルト
+        } else {
+            // 前のアルファベットを取得して「BC距離」などの表示にする
+            const prevPoint = String.fromCharCode(activePoint.charCodeAt(0) - 1);
+            labelEl.innerText = prevPoint + activePoint + "距離(m)";
+        }
+    };
+});
+
+
+
 }
+
+
 
 function getIconContent(label, data) {
     const colorVal = COLOR_MAP[data.color] || '#333';
@@ -274,26 +292,36 @@ function drawRaceLines() {
 // スクリプト後半にある calculate 関数を以下に書き換え
 function calculate(isPort) {
     if (!pointData.A.latlng) {
-        alert("まずA点を地図上でタップして配置してください。");
+        alert("まずA点を配置してください。");
         return;
     }
 
     const wind = parseFloat(document.getElementById('wind').value) || 0;
     const distAS = parseFloat(document.getElementById('distAS').value) || 100;
-    const distAB = parseFloat(document.getElementById('distAB').value) || 500;
+    const distNext = parseFloat(document.getElementById('dist').value) || 500;
     const theta = parseFloat(document.getElementById('theta').value) || 0;
 
-    // 1. AからSを計算 (風下方向へ AS距離)
+    // A基準でSを計算
     const brngS = (wind + 180) % 360;
     const posS = movePoint(pointData.A.latlng, distAS, brngS);
     setPoint('S', new google.maps.LatLng(posS.lat, posS.lng));
 
-    // 2. AからBを計算 (AB距離と角度θを利用)
-    const brngB = isPort ? (wind + 90 + theta) : (wind + 270 - theta);
-    const posB = movePoint(pointData.A.latlng, distAB, brngB);
-    setPoint('B', new google.maps.LatLng(posB.lat, posB.lng));
+    // activePointがA以外のとき、その前の点を基準に計算
+    let basePointLabel = 'A'; 
+    if (activePoint !== 'A' && activePoint !== 'S' && activePoint !== 'N') {
+        basePointLabel = String.fromCharCode(activePoint.charCodeAt(0) - 1);
+    }
+    
+    const basePoint = pointData[basePointLabel].latlng;
+    if (!basePoint) {
+        alert(basePointLabel + "点が設定されていません。");
+        return;
+    }
 
-    // ラインを再描画
+    const brngNext = isPort ? (wind + 90 + theta) : (wind + 270 - theta);
+    const posNext = movePoint(basePoint, distNext, brngNext);
+    setPoint(activePoint === 'A' ? 'B' : activePoint, new google.maps.LatLng(posNext.lat, posNext.lng));
+
     drawRaceLines();
 }
 
