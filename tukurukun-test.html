@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-    <title>コース作るくん v7.2.5b by Popolo App.com</title>
+    <title>コース作るくん v7.2.6 by Popolo App.com</title>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAHhxSJK-IhYiT9XBRwE1MX7DHhghBQQQk&callback=initMap" async defer></script>
 
     <style>
@@ -59,12 +59,14 @@
 
 <div class="header">
     <span class="title">コース作るくん</span>
-    <span class="version">v7.2.5b by Popolo App.com</span>
+    <span class="version">v7.2.6 by Popolo App.com</span>
 </div>
 
-<div class="config-panel">
+
+<div class="config-panel" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
     <div class="input-group"><label>風向(TWD)</label><input type="number" id="wind" value="0"></div>
-    <div class="input-group"><label>距離(m)</label><input type="number" id="dist" value="500"></div>
+    <div class="input-group"><label>AS距離(m)</label><input type="number" id="distAS" value="100"></div>
+    <div class="input-group"><label>AB距離(m)</label><input type="number" id="distAB" value="500"></div>
     <div class="input-group"><label>角度(°)</label><input type="number" id="theta" value="5"></div>
 </div>
 
@@ -269,24 +271,33 @@ function drawRaceLines() {
 // --- 以下、モーダル・手書き等のロジックはGoogle Maps向けに調整して継続 ---
 // (canvas等のロジックはLeaflet非依存のためそのまま動作します)
 
+// スクリプト後半にある calculate 関数を以下に書き換え
 function calculate(isPort) {
-    if (!pointData.A.latlng) return alert("A点を決めてください");
-    const wind = parseFloat(document.getElementById('wind').value) || 0;
-    const dist = parseFloat(document.getElementById('dist').value) || 500;
-    const theta = parseFloat(document.getElementById('theta').value) || 0;
-    const brng = isPort ? (wind + 90 + theta) : (wind + 270 - theta);
-    
-    const R = 6378137;
-    const φ1 = pointData.A.latlng.lat * Math.PI / 180;
-    const λ1 = pointData.A.latlng.lng * Math.PI / 180;
-    const δ = dist / R;
-    const brngRad = brng * Math.PI / 180;
+    if (!pointData.A.latlng) {
+        alert("まずA点を地図上でタップして配置してください。");
+        return;
+    }
 
-    const φ2 = Math.asin(Math.sin(φ1) * Math.cos(δ) + Math.cos(φ1) * Math.sin(δ) * Math.cos(brngRad));
-    const λ2 = λ1 + Math.atan2(Math.sin(brngRad) * Math.sin(δ) * Math.cos(φ1), Math.cos(δ) - Math.sin(φ1) * Math.sin(φ2));
-    
-    setPoint('B', new google.maps.LatLng(φ2 * 180 / Math.PI, λ2 * 180 / Math.PI));
+    const wind = parseFloat(document.getElementById('wind').value) || 0;
+    const distAS = parseFloat(document.getElementById('distAS').value) || 100;
+    const distAB = parseFloat(document.getElementById('distAB').value) || 500;
+    const theta = parseFloat(document.getElementById('theta').value) || 0;
+
+    // 1. AからSを計算 (風下方向へ AS距離)
+    const brngS = (wind + 180) % 360;
+    const posS = movePoint(pointData.A.latlng, distAS, brngS);
+    setPoint('S', new google.maps.LatLng(posS.lat, posS.lng));
+
+    // 2. AからBを計算 (AB距離と角度θを利用)
+    const brngB = isPort ? (wind + 90 + theta) : (wind + 270 - theta);
+    const posB = movePoint(pointData.A.latlng, distAB, brngB);
+    setPoint('B', new google.maps.LatLng(posB.lat, posB.lng));
+
+    // ラインを再描画
+    drawRaceLines();
 }
+
+
 
 // モーダル表示等の関数 (closeModal, openModal, toggleDrawModeなど) は前回のロジックを継承
 function openModal(label) {
