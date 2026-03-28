@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-    <title>コース作るくん v7.3.0 by Popolo App.com</title>
+    <title>コース作るくん v7.3.1 by Popolo App.com</title>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAHhxSJK-IhYiT9XBRwE1MX7DHhghBQQQk&callback=initMap" async defer></script>
 
     <style>
@@ -47,7 +47,7 @@
 
 <div class="header">
     <span class="title">コース作るくん</span>
-    <span class="version">v7.3.0 by Popolo App.com</span>
+    <span class="version">v7.3.1 by Popolo App.com</span>
 </div>
 
 <div class="config-panel">
@@ -115,16 +115,7 @@ function initMap() {
     });
 }
 
-function movePoint(base, dist, brngDeg) {
-    const R = 6378137;
-    const brng = brngDeg * Math.PI / 180;
-    const lat1 = base.lat * Math.PI / 180;
-    const lng1 = base.lng * Math.PI / 180;
-    const dR = dist / R;
-    const lat2 = Math.asin(Math.sin(lat1) * Math.cos(dR) + Math.cos(lat1) * Math.sin(dR) * Math.cos(brng));
-    const lng2 = lng1 + Math.atan2(Math.sin(brng) * Math.sin(dR) * Math.cos(lat1), Math.cos(dR) - Math.sin(lat1) * Math.sin(lat2));
-    return { lat: lat2 * 180 / Math.PI, lng: lng2 * 180 / Math.PI };
-}
+
 
 function setPoint(label, latLng) {
     const pos = latLng.lat ? { lat: latLng.lat(), lng: latLng.lng() } : latLng;
@@ -142,9 +133,12 @@ function setPoint(label, latLng) {
     }
 }
 
+// 修正版 generateCourse 関数
 function generateCourse() {
     const baseLabel = document.getElementById('basePoint').value;
-    if (!pointData[baseLabel].latlng) {
+    const baseLatLng = pointData[baseLabel].latlng;
+
+    if (!baseLatLng) {
         alert(`基準点 ${baseLabel} を地図上に配置してください。`);
         return;
     }
@@ -154,28 +148,64 @@ function generateCourse() {
     const dist = parseFloat(document.getElementById('dist').value) || 500;
     const theta = parseFloat(document.getElementById('theta').value) || 45;
 
-    // Aを基準にSを配置
-    if (baseLabel === 'A') {
-        const posS = movePoint(pointData.A.latlng, distAS, (twd + 180) % 360);
-        setPoint('S', posS);
-    }
-
-    // Aから順次計算 (例: A->B, B->C...)
     const points = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
     const baseIdx = points.indexOf(baseLabel);
 
-    // 基準点より後の点を計算
-    for (let i = baseIdx; i < points.length - 1; i++) {
-        const current = points[i];
-        const next = points[i+1];
-        const brng = (i % 2 === 0) ? (twd + 90 + theta) : (twd + 270 - theta);
-        const posNext = movePoint(pointData[current].latlng, dist, brng);
-        setPoint(next, posNext);
+    // 1. Aが基準、またはAより後の計算の場合、Sを配置 (Aの北側/南側に配置)
+    if (baseIdx >= 0) { // Aが含まれるリスト
+        const posA = pointData['A'].latlng;
+        if (posA) {
+            const brngS = (twd + 180) % 360;
+            const posS = movePoint(posA, distAS, brngS);
+            setPoint('S', posS);
+        }
     }
 
-    // 基準点より前の点も逆算が必要な場合はここに追加
-    
+    // 2. 基準点から順次「後順」の点を計算
+    for (let i = baseIdx; i < points.length - 1; i++) {
+        const currentLabel = points[i];
+        const nextLabel = points[i + 1];
+        
+        // 偶数番目(A,C,E...)は右へ、奇数番目(B,D,F...)は左へ（またはその逆）
+        // 角度thetaを考慮した進行方向
+        const brng = (i % 2 === 0) ? (twd + 90 + theta) : (twd + 270 - theta);
+        
+        const currentPos = pointData[currentLabel].latlng;
+        if (currentPos) {
+            const nextPos = movePoint(currentPos, dist, brng);
+            setPoint(nextLabel, nextPos);
+        }
+    }
+
+    // 3. 基準点から「前順」の点を逆算 (例: Bが基準ならAを計算)
+    for (let i = baseIdx; i > 0; i--) {
+        const currentLabel = points[i];
+        const prevLabel = points[i - 1];
+        
+        const revBrng = ((i - 1) % 2 === 0) ? (twd + 270 - theta) : (twd + 90 + theta);
+        
+        const currentPos = pointData[currentLabel].latlng;
+        if (currentPos) {
+            const prevPos = movePoint(currentPos, dist, revBrng);
+            setPoint(prevLabel, prevPos);
+        }
+    }
+
     drawRaceLines();
+}
+
+// 併せて movePoint も整理しました
+function movePoint(base, dist, brngDeg) {
+    const R = 6378137;
+    const brng = brngDeg * Math.PI / 180;
+    const lat1 = base.lat * Math.PI / 180;
+    const lng1 = base.lng * Math.PI / 180;
+    const dR = dist / R;
+
+    const lat2 = Math.asin(Math.sin(lat1) * Math.cos(dR) + Math.cos(lat1) * Math.sin(dR) * Math.cos(brng));
+    const lng2 = lng1 + Math.atan2(Math.sin(brng) * Math.sin(dR) * Math.cos(lat1), Math.cos(dR) - Math.sin(lat1) * Math.sin(lat2));
+
+    return { lat: lat2 * 180 / Math.PI, lng: lng2 * 180 / Math.PI };
 }
 
 function drawRaceLines() {
