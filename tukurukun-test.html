@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-    <title>コース作るくん v7.3.3 by Popolo App.com</title>
+    <title>コース作るくん v7.3.4 by Popolo App.com</title>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAHhxSJK-IhYiT9XBRwE1MX7DHhghBQQQk&callback=initMap" async defer></script>
 
     <style>
@@ -35,7 +35,7 @@
 
 <div class="header">
     <span class="title">コース作るくん</span>
-    <span class="version">v7.3.3 by Popolo App.com</span>
+    <span class="version">v7.3.4 by Popolo App.com</span>
 </div>
 
 <div class="config-panel">
@@ -170,25 +170,39 @@ function generateCourse() {
         return;
     }
 
-    // --- 以下、計算ループ処理（既存のまま） ---
-    // 2. 基準点から「前順」を計算
+    // 1. 基準点から「前順」を計算（A方向へ戻る）
     for (let i = baseIdx; i > 0; i--) {
-        // ... (省略)
+        const currentLabel = points[i];
+        const prevLabel = points[i - 1];
+        // 逆算用の角度
+        const revBrng = ((i - 1) % 2 === 0) ? (twd + 270 - theta) : (twd + 90 + theta);
+        const currentPos = pointData[currentLabel].latlng;
+        if (currentPos) {
+            setPoint(prevLabel, movePoint(currentPos, dist, revBrng));
+        }
     }
 
-    // 3. 基準点から「後順」を計算
+    // 2. 基準点から「後順」を計算（J方向へ進む）
     for (let i = baseIdx; i < points.length - 1; i++) {
-        // ... (省略)
+        const currentLabel = points[i];
+        const nextLabel = points[i + 1];
+        // 順算用の角度
+        const brng = (i % 2 === 0) ? (twd + 90 + theta) : (twd + 270 - theta);
+        const currentPos = pointData[currentLabel].latlng;
+        if (currentPos) {
+            setPoint(nextLabel, movePoint(currentPos, dist, brng));
+        }
     }
-    // ---------------------------------------
 
-    // 4. 確定したAを元にSを配置
+    // 3. 確定したAを元にSを配置
     if (pointData['A'].latlng) {
         setPoint('S', movePoint(pointData['A'].latlng, distAS, (twd + 180) % 360));
     }
 
     drawRaceLines();
 }
+
+
 
 function drawRaceLines() {
     if (startLine) startLine.setMap(null);
