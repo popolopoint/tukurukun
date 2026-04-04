@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-    <title>コース作るくん v7.3.4 by Popolo App.com</title>
+    <title>コース作るくん v7.3.4b by Popolo App.com</title>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAHhxSJK-IhYiT9XBRwE1MX7DHhghBQQQk&callback=initMap" async defer></script>
 
     <style>
@@ -51,7 +51,7 @@
     <div class="input-group"><label>風向(°)</label><input type="number" id="wind" value="0"></div>
     <div class="input-group"><label>AS(m)</label><input type="number" id="distAS" value="100"></div>
     <div class="input-group"><label>間隔(m)</label><input type="number" id="dist" value="500"></div>
-    <div class="input-group"><label>角度(°)</label><input type="number" id="theta" value="45"></div>
+    <div class="input-group"><label>角度(°)</label><input type="number" id="theta" value="5"></div>
 </div>
 
 <div class="point-selector" id="selector">
@@ -147,7 +147,7 @@ function generateCourse() {
     const twd = parseFloat(document.getElementById('wind').value) || 0;
     const distAS = parseFloat(document.getElementById('distAS').value) || 100;
     const dist = parseFloat(document.getElementById('dist').value) || 500;
-    const theta = parseFloat(document.getElementById('theta').value) || 45;
+    const theta = parseFloat(document.getElementById('theta').value) || 5;
 
     // 全ての候補点
     const allPoints = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
