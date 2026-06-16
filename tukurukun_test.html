@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-<title>コース作るくん v7.4.1 by Popolo App.com</title>
+<title>コース作るくん v7.4.2 by Popolo App.com</title>
 <style>
-:root{ --red:#ff3b30; --blue:#0000ff; --yellow:#ffff00; --green:#28a745; --purple:#6a1b9a; --orange:#f57c00; --gray:#555; --navy:#000080; --pink:#ff2d55; --teal:#5ac8fa; }
+:root{ --red:#ff3b30; --blue:#0000ff; --yellow:#ffff00; --green:#28a745; --purple:#6a1b9a; --orange:#f57c00; --gray:#555; --navy:#000080; --pink:#ff2d55; --teal:#5ac8fa; --lime:#7ccd7c;}
 body { font-family: -apple-system,BlinkMacSystemFont,"Helvetica Neue","Hiragino Kaku Gothic ProN","メイリオ",Meiryo,sans-serif; margin:10px; color:#222; overflow-x: hidden; }
 h2 { margin:0 0 8px 0; font-size:18px; }
 
@@ -39,7 +39,15 @@ h2 { margin:0 0 8px 0; font-size:18px; }
 #btnMapResize { position: absolute; top: 10px; right: 10px; z-index: 50; background: rgba(255,255,255,0.9); border: 1px solid #ccc; padding: 8px 12px; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
 
 #coordsContainer { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; justify-content: space-between; }
-.pointBox { border-radius:50%; width:40px; height:40px; display:flex; justify-content:center; align-items:center; color:white; font-weight:bold; cursor:pointer; font-size: 0.9em; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+.pointBox { border-radius:50%; width:40px; height:40px; display:flex; justify-content:center; align-items:center; color:white; font-weight:bold; cursor:pointer; font-size: 0.9em; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: background 0.2s; }
+
+/* カラー変更パレットのスタイル */
+#colorPickerContainer { display: flex; flex-direction: column; gap: 5px; background: #fdfdfd; padding: 10px; border: 1px solid #e0e0e0; border-radius: 8px; margin-top: 10px; }
+.color-picker-title { font-size: 12px; font-weight: bold; color: #555; display: flex; align-items: center; gap: 5px; }
+#selectedPointLabel { background: #333; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 11px; }
+.color-palette { display: flex; gap: 8px; margin-top: 3px; }
+.color-dot { width: 32px; height: 32px; border-radius: 6px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.15); border: 2px solid transparent; box-sizing: border-box; }
+.color-dot.active { border-color: #000; transform: scale(1.05); }
 
 .sub-button-row { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
 .btn-sub { background:#f8f8f8; border:1px solid #ccc; padding:6px 10px; border-radius:6px; font-size:12px; cursor:pointer; font-weight: bold; color: #444; }
@@ -58,7 +66,7 @@ h2 { margin:0 0 8px 0; font-size:18px; }
 </head>
 <body>
 
-<h2>コース作るくん <span style="font-size:0.7em;">v7.4.1 by Popolo App.com</span></h2>
+<h2>コース作るくん <span style="font-size:0.7em;">v7.4.2 by Popolo App.com</span></h2>
 
 <div class="input-row">
   <div class="input-group"><label>風向</label><input type="number" id="wind" step="any" placeholder="0"></div>
@@ -128,15 +136,27 @@ h2 { margin:0 0 8px 0; font-size:18px; }
 </div>
 
 <div id="coordsContainer">
-  <div class="pointBox" id="btnA" style="background:var(--red);">A</div>
-  <div class="pointBox" id="btnB" style="background:var(--blue);">B</div>
-  <div class="pointBox" id="btnC" style="background:var(--yellow); color:#000; text-shadow:none;">C</div>
-  <div class="pointBox" id="btnD" style="background:var(--green);">D</div>
-  <div class="pointBox" id="btnE" style="background:var(--purple);">E</div>
-  <div class="pointBox" id="btnF" style="background:var(--pink); display:none;">F</div>
-  <div class="pointBox" id="btnG" style="background:var(--navy); display:none;">G</div>
-  <div class="pointBox" id="btnK" style="background:var(--teal); display:none;">K</div>
-  <div class="pointBox" id="btnS" style="background:var(--blue); display:none;">S</div>
+  <div class="pointBox" id="btnA">A</div>
+  <div class="pointBox" id="btnB">B</div>
+  <div class="pointBox" id="btnC">C</div>
+  <div class="pointBox" id="btnD">D</div>
+  <div class="pointBox" id="btnE">E</div>
+  <div class="pointBox" id="btnF" style="display:none;">F</div>
+  <div class="pointBox" id="btnG" style="display:none;">G</div>
+  <div class="pointBox" id="btnK" style="display:none;">K</div>
+  <div class="pointBox" id="btnS" style="display:none;">S</div>
+</div>
+
+<div id="colorPickerContainer">
+  <div class="color-picker-title">マークカラー変更: <span id="selectedPointLabel">A点を選択中</span></div>
+  <div class="color-palette">
+    <div class="color-dot" data-color="#f57c00" style="background:var(--orange);" title="オレンジ"></div>
+    <div class="color-dot" data-color="#ffff00" style="background:var(--yellow);" title="黄色"></div>
+    <div class="color-dot" data-color="#ff2d55" style="background:var(--pink);" title="ピンク"></div>
+    <div class="color-dot" data-color="#ff3b30" style="background:var(--red);" title="赤"></div>
+    <div class="color-dot" data-color="#28a745" style="background:var(--green);" title="黄緑"></div>
+    <div class="color-dot" data-color="#0000ff" style="background:var(--blue);" title="青"></div>
+  </div>
 </div>
 
 <div class="sub-button-row">
@@ -171,7 +191,11 @@ h2 { margin:0 0 8px 0; font-size:18px; }
 <script>
 let map, circles={}, markersLabel={}, polylines=[];
 let points = {A:null,B:null,C:null,D:null,E:null,F:null,G:null,S:null,K:null};
-const COLORS = { A:'#ff3b30', B:'#0000ff', C:'#ffff00', D:'#28a745', E:'#6a1b9a', F:'#ff2d55', G:'#000080', S:'#0000ff', K:'#5ac8fa' };
+
+// すべてのマークのデフォルト色をオレンジに設定
+const COLORS = { A:'#f57c00', B:'#f57c00', C:'#f57c00', D:'#f57c00', E:'#f57c00', F:'#f57c00', G:'#f57c00', S:'#f57c00', K:'#f57c00' };
+let activeSelectPoint = 'A'; // カラー変更対象のデフォルトマーク番地
+
 let currentIsPort = true;
 let path = [];
 
@@ -323,8 +347,22 @@ function calculateCourse(isPort){
   else path = [points.A, points.B, points.C, points.D, points.E].filter(v => v);
 
   polylines.push(new google.maps.Polyline({path:path, strokeColor:'#444', strokeWeight:2, map}));
-  Object.keys(points).forEach(k => { if(points[k]) drawPoint(k, points[k], COLORS[k], k); });
+  
+  // 各マークを描画するとともに、画面下のボタンの背景色も設定されたカラーに更新
+  Object.keys(points).forEach(k => { 
+    if(points[k]) {
+      drawPoint(k, points[k], COLORS[k], k); 
+      const btn = document.getElementById('btn' + k);
+      if(btn) {
+        btn.style.background = COLORS[k];
+        // 黄色マークのときだけ文字の視認性向上のため黒文字、その他は白文字にする
+        btn.style.color = (COLORS[k] === '#ffff00') ? '#000' : '#fff';
+        btn.style.textShadow = (COLORS[k] === '#ffff00') ? 'none' : '1px 1px 2px rgba(0,0,0,0.5)';
+      }
+    } 
+  });
   updateDistModalContent(isJW3, is5J);
+  updateActivePickerDot();
 }
 
 function updateDistModalContent(isJW3, is5J){
@@ -360,7 +398,7 @@ function updateAPos(lat, lng) {
 function drawPoint(label,pos,color,displayText){
   displayText=displayText||label;
   circles[label]=new google.maps.Circle({ map, center:pos, radius:(label==='A'?16:12), strokeColor:color, strokeOpacity:1, strokeWeight:2, fillColor:color, fillOpacity:0.8 });
-  markersLabel[label]=new google.maps.Marker({ position:pos, map, icon:{path:google.maps.SymbolPath.CIRCLE, scale:0}, label:{text:displayText, color:(label==='C'&&displayText==='C'?'#000':'#fff'), fontWeight:"bold", fontSize:"13px"} });
+  markersLabel[label]=new google.maps.Marker({ position:pos, map, icon:{path:google.maps.SymbolPath.CIRCLE, scale:0}, label:{text:displayText, color:(color==='#ffff00'?'#000':'#fff'), fontWeight:"bold", fontSize:"13px"} });
 }
 
 function distanceBetween(p1,p2){ if(!p1||!p2)return 0; const R=6378137, dφ=(p2.lat-p1.lat)*Math.PI/180, dλ=(p2.lng-p1.lng)*Math.PI/180; const a=Math.sin(dφ/2)**2 + Math.cos(p1.lat*Math.PI/180)*Math.cos(p2.lat*Math.PI/180)*Math.sin(dλ/2)**2; return R*2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); }
@@ -374,7 +412,6 @@ function buildTrackingUrl(baseUrl) {
   
   let url = `${baseUrl}?mode=committee&course=${courseValue}&wind=${wind}&dist=${dist}&theta=${theta}`;
   
-  // 生成されている全てのマークの座標情報をパラメータ化して連結する
   const targets = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'K', 'S'];
   targets.forEach(key => {
     if (points[key]) {
@@ -403,7 +440,6 @@ function shareToTracking(targetUrl, envName) {
     if (navigator.share) {
       navigator.share({ text: textData }).catch(() => {});
     } else {
-      // コピペ用ダイアログ表示
       const dummy = document.createElement("textarea");
       document.body.appendChild(dummy);
       dummy.value = textData;
@@ -415,16 +451,26 @@ function shareToTracking(targetUrl, envName) {
   }
 }
 
+// 選択中のマークカラーと同じパレットのドットを強調表示する
+function updateActivePickerDot() {
+  const activeColor = COLORS[activeSelectPoint];
+  document.querySelectorAll('.color-dot').forEach(dot => {
+    if(dot.getAttribute('data-color') === activeColor) {
+      dot.classList.add('active');
+    } else {
+      dot.classList.remove('active');
+    }
+  });
+}
+
 window.addEventListener('load', ()=>{ 
   document.getElementById('btnStarboard').onclick=()=>calculateCourse(false);
   document.getElementById('btnPort').onclick=()=>calculateCourse(true);
 
-  // 本番環境用ボタン (traking_latest.html)
   document.getElementById('btnShareAll').onclick = () => {
     shareToTracking('https://popolopoint.github.io/traking/traking_latest.html', '本番');
   };
 
-  // テスト環境用ボタン (traking_test.html)
   document.getElementById('btnShareTest').onclick = () => {
     shareToTracking('https://popolopoint.github.io/traking/traking_test.html', 'テスト');
   };
@@ -433,9 +479,25 @@ window.addEventListener('load', ()=>{
     navigator.geolocation.getCurrentPosition(p => { setBasePosition({ lat: p.coords.latitude, lng: p.coords.longitude }); }, e => alert("現在地の取得に失敗しました")); 
   };
 
+  // 各アルファベットボタンの挙動（クリック時、カラー変更の対象としてセット）
   ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'K', 'S'].forEach(l => { 
     const btn = document.getElementById('btn' + l); 
-    if (btn) btn.onclick = () => { if(points[l]) shareCoords(l, points[l]); }; 
+    if (btn) {
+      btn.onclick = () => { 
+        activeSelectPoint = l;
+        document.getElementById('selectedPointLabel').textContent = l + '点を選択中';
+        updateActivePickerDot();
+      }; 
+    }
+  });
+
+  // カラーパレットのドットクリック時の色変更処理
+  document.querySelectorAll('.color-dot').forEach(dot => {
+    dot.onclick = (e) => {
+      const newColor = e.target.getAttribute('data-color');
+      COLORS[activeSelectPoint] = newColor; // 内部データの色を上書き
+      calculateCourse(currentIsPort);       // 再描画
+    };
   });
 
   document.getElementById('courseSelect').onchange = (e) => {
