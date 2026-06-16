@@ -3,9 +3,10 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-<title>コース作るくん v7.4.2 by Popolo App.com</title>
+<title>コース作るくん v7.4.3 by Popolo App.com</title>
 <style>
-:root{ --red:#ff3b30; --blue:#0000ff; --yellow:#ffff00; --green:#28a745; --purple:#6a1b9a; --orange:#f57c00; --gray:#555; --navy:#000080; --pink:#ff2d55; --teal:#5ac8fa; --lime:#7ccd7c;}
+/* 赤は元の色に戻し、ピンクを白に近い淡いトーンにして識別性を向上 */
+:root{ --red:#ff3b30; --blue:#0000ff; --yellow:#ffff00; --green:#28a745; --purple:#6a1b9a; --orange:#f57c00; --gray:#555; --navy:#000080; --pink:#ffb3c1; --teal:#5ac8fa; }
 body { font-family: -apple-system,BlinkMacSystemFont,"Helvetica Neue","Hiragino Kaku Gothic ProN","メイリオ",Meiryo,sans-serif; margin:10px; color:#222; overflow-x: hidden; }
 h2 { margin:0 0 8px 0; font-size:18px; }
 
@@ -41,7 +42,6 @@ h2 { margin:0 0 8px 0; font-size:18px; }
 #coordsContainer { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; justify-content: space-between; }
 .pointBox { border-radius:50%; width:40px; height:40px; display:flex; justify-content:center; align-items:center; color:white; font-weight:bold; cursor:pointer; font-size: 0.9em; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: background 0.2s; }
 
-/* カラー変更パレットのスタイル */
 #colorPickerContainer { display: flex; flex-direction: column; gap: 5px; background: #fdfdfd; padding: 10px; border: 1px solid #e0e0e0; border-radius: 8px; margin-top: 10px; }
 .color-picker-title { font-size: 12px; font-weight: bold; color: #555; display: flex; align-items: center; gap: 5px; }
 #selectedPointLabel { background: #333; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 11px; }
@@ -66,7 +66,7 @@ h2 { margin:0 0 8px 0; font-size:18px; }
 </head>
 <body>
 
-<h2>コース作るくん <span style="font-size:0.7em;">v7.4.2 by Popolo App.com</span></h2>
+<h2>コース作るくん <span style="font-size:0.7em;">v7.4.3 by Popolo App.com</span></h2>
 
 <div class="input-row">
   <div class="input-group"><label>風向</label><input type="number" id="wind" step="any" placeholder="0"></div>
@@ -152,7 +152,7 @@ h2 { margin:0 0 8px 0; font-size:18px; }
   <div class="color-palette">
     <div class="color-dot" data-color="#f57c00" style="background:var(--orange);" title="オレンジ"></div>
     <div class="color-dot" data-color="#ffff00" style="background:var(--yellow);" title="黄色"></div>
-    <div class="color-dot" data-color="#ff2d55" style="background:var(--pink);" title="ピンク"></div>
+    <div class="color-dot" data-color="#ffb3c1" style="background:var(--pink);" title="ピンク"></div>
     <div class="color-dot" data-color="#ff3b30" style="background:var(--red);" title="赤"></div>
     <div class="color-dot" data-color="#28a745" style="background:var(--green);" title="黄緑"></div>
     <div class="color-dot" data-color="#0000ff" style="background:var(--blue);" title="青"></div>
@@ -192,9 +192,8 @@ h2 { margin:0 0 8px 0; font-size:18px; }
 let map, circles={}, markersLabel={}, polylines=[];
 let points = {A:null,B:null,C:null,D:null,E:null,F:null,G:null,S:null,K:null};
 
-// すべてのマークのデフォルト色をオレンジに設定
 const COLORS = { A:'#f57c00', B:'#f57c00', C:'#f57c00', D:'#f57c00', E:'#f57c00', F:'#f57c00', G:'#f57c00', S:'#f57c00', K:'#f57c00' };
-let activeSelectPoint = 'A'; // カラー変更対象のデフォルトマーク番地
+let activeSelectPoint = 'A';
 
 let currentIsPort = true;
 let path = [];
@@ -348,16 +347,16 @@ function calculateCourse(isPort){
 
   polylines.push(new google.maps.Polyline({path:path, strokeColor:'#444', strokeWeight:2, map}));
   
-  // 各マークを描画するとともに、画面下のボタンの背景色も設定されたカラーに更新
   Object.keys(points).forEach(k => { 
     if(points[k]) {
+      // 淡いピンク（#ffb3c1）や黄色（#ffff00）など明るい背景のときは文字色を黒（#000）にして視認性を確保
+      const isLightColor = (COLORS[k] === '#ffb3c1' || COLORS[k] === '#ffff00');
       drawPoint(k, points[k], COLORS[k], k); 
       const btn = document.getElementById('btn' + k);
       if(btn) {
         btn.style.background = COLORS[k];
-        // 黄色マークのときだけ文字の視認性向上のため黒文字、その他は白文字にする
-        btn.style.color = (COLORS[k] === '#ffff00') ? '#000' : '#fff';
-        btn.style.textShadow = (COLORS[k] === '#ffff00') ? 'none' : '1px 1px 2px rgba(0,0,0,0.5)';
+        btn.style.color = isLightColor ? '#000' : '#fff';
+        btn.style.textShadow = isLightColor ? 'none' : '1px 1px 2px rgba(0,0,0,0.5)';
       }
     } 
   });
@@ -397,8 +396,9 @@ function updateAPos(lat, lng) {
 
 function drawPoint(label,pos,color,displayText){
   displayText=displayText||label;
+  const isLightColor = (color === '#ffb3c1' || color === '#ffff00');
   circles[label]=new google.maps.Circle({ map, center:pos, radius:(label==='A'?16:12), strokeColor:color, strokeOpacity:1, strokeWeight:2, fillColor:color, fillOpacity:0.8 });
-  markersLabel[label]=new google.maps.Marker({ position:pos, map, icon:{path:google.maps.SymbolPath.CIRCLE, scale:0}, label:{text:displayText, color:(color==='#ffff00'?'#000':'#fff'), fontWeight:"bold", fontSize:"13px"} });
+  markersLabel[label]=new google.maps.Marker({ position:pos, map, icon:{path:google.maps.SymbolPath.CIRCLE, scale:0}, label:{text:displayText, color:(isLightColor?'#000':'#fff'), fontWeight:"bold", fontSize:"13px"} });
 }
 
 function distanceBetween(p1,p2){ if(!p1||!p2)return 0; const R=6378137, dφ=(p2.lat-p1.lat)*Math.PI/180, dλ=(p2.lng-p1.lng)*Math.PI/180; const a=Math.sin(dφ/2)**2 + Math.cos(p1.lat*Math.PI/180)*Math.cos(p2.lat*Math.PI/180)*Math.sin(dλ/2)**2; return R*2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); }
@@ -451,7 +451,6 @@ function shareToTracking(targetUrl, envName) {
   }
 }
 
-// 選択中のマークカラーと同じパレットのドットを強調表示する
 function updateActivePickerDot() {
   const activeColor = COLORS[activeSelectPoint];
   document.querySelectorAll('.color-dot').forEach(dot => {
@@ -479,7 +478,6 @@ window.addEventListener('load', ()=>{
     navigator.geolocation.getCurrentPosition(p => { setBasePosition({ lat: p.coords.latitude, lng: p.coords.longitude }); }, e => alert("現在地の取得に失敗しました")); 
   };
 
-  // 各アルファベットボタンの挙動（クリック時、カラー変更の対象としてセット）
   ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'K', 'S'].forEach(l => { 
     const btn = document.getElementById('btn' + l); 
     if (btn) {
@@ -491,12 +489,11 @@ window.addEventListener('load', ()=>{
     }
   });
 
-  // カラーパレットのドットクリック時の色変更処理
   document.querySelectorAll('.color-dot').forEach(dot => {
     dot.onclick = (e) => {
       const newColor = e.target.getAttribute('data-color');
-      COLORS[activeSelectPoint] = newColor; // 内部データの色を上書き
-      calculateCourse(currentIsPort);       // 再描画
+      COLORS[activeSelectPoint] = newColor; 
+      calculateCourse(currentIsPort);       
     };
   });
 
