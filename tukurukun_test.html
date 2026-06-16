@@ -3,9 +3,8 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-<title>コース作るくん v7.4.3 by Popolo App.com</title>
+<title>コース作るくん v7.4.4 by Popolo App.com</title>
 <style>
-/* 赤は元の色に戻し、ピンクを白に近い淡いトーンにして識別性を向上 */
 :root{ --red:#ff3b30; --blue:#0000ff; --yellow:#ffff00; --green:#28a745; --purple:#6a1b9a; --orange:#f57c00; --gray:#555; --navy:#000080; --pink:#ffb3c1; --teal:#5ac8fa; }
 body { font-family: -apple-system,BlinkMacSystemFont,"Helvetica Neue","Hiragino Kaku Gothic ProN","メイリオ",Meiryo,sans-serif; margin:10px; color:#222; overflow-x: hidden; }
 h2 { margin:0 0 8px 0; font-size:18px; }
@@ -37,7 +36,9 @@ h2 { margin:0 0 8px 0; font-size:18px; }
 #mapContainer { position: relative; width: 100%; margin-top: 10px; }
 #map { width:100%; height:450px; border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,0.2); transition: height 0.3s ease; }
 #map.fullscreen { height: calc(100vh - 30px); }
-#btnMapResize { position: absolute; top: 10px; right: 10px; z-index: 50; background: rgba(255,255,255,0.9); border: 1px solid #ccc; padding: 8px 12px; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+
+/* 全画面時にも確実に最前面へ配置 */
+#btnMapResize { position: absolute; top: 10px; right: 10px; z-index: 1005; background: rgba(255,255,255,0.9); border: 1px solid #ccc; padding: 8px 12px; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
 
 #coordsContainer { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; justify-content: space-between; }
 .pointBox { border-radius:50%; width:40px; height:40px; display:flex; justify-content:center; align-items:center; color:white; font-weight:bold; cursor:pointer; font-size: 0.9em; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: background 0.2s; }
@@ -52,7 +53,7 @@ h2 { margin:0 0 8px 0; font-size:18px; }
 .sub-button-row { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
 .btn-sub { background:#f8f8f8; border:1px solid #ccc; padding:6px 10px; border-radius:6px; font-size:12px; cursor:pointer; font-weight: bold; color: #444; }
 
-#modalOverlay, #distModalOverlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1000; justify-content:center; align-items:center; }
+#modalOverlay, #distModalOverlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1010; justify-content:center; align-items:center; }
 .modalContent { background:white; padding:20px; border-radius:12px; width:90%; max-width:400px; box-shadow:0 4px 20px rgba(0,0,0,0.3); }
 .modalContent h3 { margin-top:0; font-size:18px; border-bottom: 2px solid #eee; padding-bottom: 8px; }
 .modal-input-group { margin-bottom:15px; }
@@ -66,7 +67,7 @@ h2 { margin:0 0 8px 0; font-size:18px; }
 </head>
 <body>
 
-<h2>コース作るくん <span style="font-size:0.7em;">v7.4.3 by Popolo App.com</span></h2>
+<h2>コース作るくん <span style="font-size:0.7em;">v7.4.4 by Popolo App.com</span></h2>
 
 <div class="input-row">
   <div class="input-group"><label>風向</label><input type="number" id="wind" step="any" placeholder="0"></div>
@@ -349,7 +350,6 @@ function calculateCourse(isPort){
   
   Object.keys(points).forEach(k => { 
     if(points[k]) {
-      // 淡いピンク（#ffb3c1）や黄色（#ffff00）など明るい背景のときは文字色を黒（#000）にして視認性を確保
       const isLightColor = (COLORS[k] === '#ffb3c1' || COLORS[k] === '#ffff00');
       drawPoint(k, points[k], COLORS[k], k); 
       const btn = document.getElementById('btn' + k);
