@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-<title>コース作るくん v7.4.1 by Popolo App.com</title>
+<title>コース作るくん v6.7.3 by Popolo App.com</title>
 <style>
 :root{ --red:#ff3b30; --blue:#0000ff; --yellow:#ffff00; --green:#28a745; --purple:#6a1b9a; --orange:#f57c00; --gray:#555; --navy:#000080; --pink:#ff2d55; --teal:#5ac8fa; }
 body { font-family: -apple-system,BlinkMacSystemFont,"Helvetica Neue","Hiragino Kaku Gothic ProN","メイリオ",Meiryo,sans-serif; margin:10px; color:#222; overflow-x: hidden; }
@@ -19,19 +19,17 @@ h2 { margin:0 0 8px 0; font-size:18px; }
 .compact-input { font-size: 18px !important; padding: 6px 2px !important; width: 55px !important; text-align:center; border-radius:6px; border:1px solid #ccc; }
 #sausageSettings, #jwsaSettings, #jwsa2Settings, #jwsa3Settings { display:none; flex-wrap:nowrap; align-items:center; gap:4px; background:#f0f0f0; padding:5px; border-radius:8px; margin-bottom:10px; width: 100%; box-sizing: border-box; overflow-x: auto; }
 
-.main-buttons { display: grid; grid-template-columns: 1.51fr 1fr 1fr; gap: 8px; width: 100%; margin: 10px 0; align-items: stretch; }
-.main-buttons button { font-size: 18px; padding: 15px 5px; border-radius: 10px; border: none; color: white; cursor: pointer; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.16); display: flex; flex-direction: column; align-items: center; justify-content: center; }
-#btnShareAll { background: #007aff; }
+.main-buttons { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; width: 100%; margin: 10px 0; }
+.main-buttons button { font-size: 18px; padding: 15px 5px; border-radius: 10px; border: none; color: white; cursor: pointer; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.16); }
+#btnShareAll { background: var(--gray); }
 #btnStarboard { background: var(--green); }
 #btnPort { background: var(--orange); }
 
-.test-btn-wrapper { display: flex; justify-content: flex-start; margin: 0 0 10px 0; }
-#btnShareTest { background: #6c757d; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; opacity: 0.8; }
-#btnShareTest:hover { opacity: 1; }
-
-#inputsMode { margin:15px 0; padding:12px; background:#f0f7ff; border-radius:8px; font-size: 16px; color:#333; border:1px solid #d0e0f0; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-#inputsMode select { font-size: 22px; padding: 5px; }
-#btnSetCurrent { background: #007aff; color:white; border:none; padding:10px 15px; border-radius:6px; font-weight:bold; font-size:18px; flex: 1; }
+#inputsMode { margin:15px 0; padding:12px; background:#f0f7ff; border-radius:8px; font-size: 16px; color:#333; border:1px solid #d0e0f0; }
+#inputsMode select { font-size: 22px; padding: 5px; margin: 0 5px; }
+.radio-group { margin: 10px 0; display: flex; gap: 15px; align-items: center; }
+#btnSetCurrent { background: #007aff; color:white; border:none; padding:10px 15px; border-radius:6px; font-weight:bold; margin-top:5px; width:100%; font-size:18px; }
+#btnCalibrateGPS { background: var(--red); color:white; border:none; padding:12px 15px; border-radius:6px; font-weight:bold; margin-top:10px; width:100%; font-size:18px; box-shadow: 0 2px 6px rgba(255,59,48,0.3); }
 
 #mapContainer { position: relative; width: 100%; margin-top: 10px; }
 #map { width:100%; height:450px; border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,0.2); transition: height 0.3s ease; }
@@ -58,7 +56,7 @@ h2 { margin:0 0 8px 0; font-size:18px; }
 </head>
 <body>
 
-<h2>コース作るくん <span style="font-size:0.7em;">v7.4.1 by Popolo App.com</span></h2>
+<h2>コース作るくん <span style="font-size:0.7em;">v6.7.3 by Popolo App.com</span></h2>
 
 <div class="input-row">
   <div class="input-group"><label>風向</label><input type="number" id="wind" step="any" placeholder="0"></div>
@@ -110,21 +108,23 @@ h2 { margin:0 0 8px 0; font-size:18px; }
 </div>
 
 <div class="main-buttons">
-  <button id="btnShareAll">虎キングへ送る<br><span style="font-size:9px;font-weight:normal;">(latest)</span></button>
+  <button id="btnShareAll">データ送信</button>
   <button id="btnStarboard">スタボー</button>
   <button id="btnPort">ポート</button>
 </div>
 
-<div class="test-btn-wrapper">
-  <button id="btnShareTest">テスト環境へ送る (test.html)</button>
-</div>
-
 <div id="inputsMode">
+  <strong>基準点設定・補正：</strong>
   <select id="basePointSelect">
     <option value="A" selected>A点</option><option value="B">B点</option><option value="C">C点</option>
     <option value="D">D点</option><option value="E">E点</option><option value="F">F点</option><option value="G">G点</option><option value="S">S点</option><option value="K">K点</option>
   </select>
-  <button id="btnSetCurrent">現在地をセットして展開</button>
+  <div class="radio-group">
+    <label><input type="radio" name="aMode" value="gps" checked> 現在地をセット</label>
+    <label><input type="radio" name="aMode" value="map"> マップ指定</label>
+  </div>
+  <button id="btnSetCurrent">展開・反映</button>
+  <button id="btnCalibrateGPS">選択中のマークを現在地で補正</button>
 </div>
 
 <div id="coordsContainer">
@@ -207,6 +207,12 @@ function initMap(){
     gestureHandling: 'greedy', 
     disableDefaultUI: true, 
     zoomControl: true 
+  });
+
+  map.addListener('click', (e)=>{ 
+    if(document.querySelector('input[name="aMode"]:checked').value==='map'){ 
+      setBasePosition({lat:e.latLng.lat(), lng:e.latLng.lng()}); 
+    } 
   });
 
   let meMarker = new google.maps.Marker({
@@ -365,52 +371,20 @@ function drawPoint(label,pos,color,displayText){
 
 function distanceBetween(p1,p2){ if(!p1||!p2)return 0; const R=6378137, dφ=(p2.lat-p1.lat)*Math.PI/180, dλ=(p2.lng-p1.lng)*Math.PI/180; const a=Math.sin(dφ/2)**2 + Math.cos(p1.lat*Math.PI/180)*Math.cos(p2.lat*Math.PI/180)*Math.sin(dλ/2)**2; return R*2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); }
 
-function buildTrackingUrl(baseUrl) {
-  if (!points || !points.A) return null;
-  const wind = document.getElementById('wind').value || 0;
-  const dist = document.getElementById('dist').value || 500;
-  const theta = document.getElementById('theta').value || 5;
-  const courseValue = document.getElementById('courseSelect').value;
-  
-  let url = `${baseUrl}?mode=committee&course=${courseValue}&wind=${wind}&dist=${dist}&theta=${theta}`;
-  
-  // 生成されている全てのマークの座標情報をパラメータ化して連結する
-  const targets = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'K', 'S'];
-  targets.forEach(key => {
-    if (points[key]) {
-      url += `&lat${key}=${points[key].lat.toFixed(6)}&lng${key}=${points[key].lng.toFixed(6)}`;
-    }
-  });
-  return url;
-}
+function shareCoords(l, p) { 
+  if (!p) return; 
+  const lat = p.lat.toFixed(6);
+  const lng = p.lng.toFixed(6);
+  const t = l + "点\n" + lat + "," + lng;
+  const mapUrl = "https://www.google.com/maps/dir/?api=1&destination=" + lat + "," + lng + "&travelmode=walking";
 
-function shareToTracking(targetUrl, envName) {
-  const fullUrl = buildTrackingUrl(targetUrl);
-  if (!fullUrl) { alert("地点データがありません。コースを組み立ててください。"); return; }
-  
-  const wind = document.getElementById('wind').value || 0;
-  const courseSelect = document.getElementById('courseSelect');
-  const courseName = courseSelect.options[courseSelect.selectedIndex].text;
-  
-  let textData = `【${courseName}】風向:${wind}°\n`;
-  const order = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'K', 'S'];
-  order.forEach(key => { if (points[key]) textData += `${key}: ${points[key].lat.toFixed(6)},${points[key].lng.toFixed(6)}\n`; });
-  textData += `\n▼虎キング(${envName})でコースを確認・連動\n${fullUrl}`;
-
-  if (confirm(`虎キング (${envName}) へデータを送信しますか？\n(OKでアプリ画面へジャンプ、キャンセルでURLテキスト共有)`)) {
-    window.open(fullUrl, '_blank');
+  if (confirm(l + "点へ向かいますか？\n(OKでGoogleマップのナビを起動します)")) {
+    window.open(mapUrl, '_blank');
   } else {
     if (navigator.share) {
-      navigator.share({ text: textData }).catch(() => {});
+      navigator.share({text: t + "\n" + mapUrl}).catch(function(){});
     } else {
-      // コピペ用ダイアログ表示
-      const dummy = document.createElement("textarea");
-      document.body.appendChild(dummy);
-      dummy.value = textData;
-      dummy.select();
-      document.execCommand("copy");
-      document.body.removeChild(dummy);
-      alert("クリップボードに連携データをコピーしました。LINE等に貼り付けて共有してください。");
+      alert(t + "\n" + mapUrl);
     }
   }
 }
@@ -419,23 +393,54 @@ window.addEventListener('load', ()=>{
   document.getElementById('btnStarboard').onclick=()=>calculateCourse(false);
   document.getElementById('btnPort').onclick=()=>calculateCourse(true);
 
-  // 本番環境用ボタン (traking_latest.html)
   document.getElementById('btnShareAll').onclick = () => {
-    shareToTracking('https://popolopoint.github.io/traking/traking_latest.html', '本番');
-  };
+    if (!points || !points.A) { alert("地点データがありません。"); return; }
+    const wind = document.getElementById('wind').value || 0;
+    const dist = document.getElementById('dist').value || 500;
+    const theta = document.getElementById('theta').value || 5;
+    const courseSelect = document.getElementById('courseSelect');
+    const courseValue = courseSelect.value;
+    const courseName = courseSelect.options[courseSelect.selectedIndex].text;
+    const baseUrl = window.location.origin + window.location.pathname;
 
-  // テスト環境用ボタン (traking_test.html)
-  document.getElementById('btnShareTest').onclick = () => {
-    shareToTracking('https://popolopoint.github.io/traking/traking_test.html', 'テスト');
+    const params = `?lat=${points.A.lat.toFixed(6)}&lng=${points.A.lng.toFixed(6)}&heading=${wind}&dist=${dist}&theta=${theta}&course=${courseValue}`;
+    const shareUrl = baseUrl + params;
+
+    let t = `【${courseName}】風向:${wind}°\n距離:${dist}m / 角度:${theta}°\n\n`;
+    const order = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'K', 'S'];
+    order.forEach(key => { if (points[key]) t += `${key}: ${points[key].lat.toFixed(6)},${points[key].lng.toFixed(6)}\n`; });
+    t += `\n▼アプリでコース図を再現\n${shareUrl}`;
+    if (navigator.share) navigator.share({ text: t }).catch(() => {}); else alert(t);
   };
 
   document.getElementById('btnSetCurrent').onclick = () => { 
-    navigator.geolocation.getCurrentPosition(p => { setBasePosition({ lat: p.coords.latitude, lng: p.coords.longitude }); }, e => alert("現在地の取得に失敗しました")); 
+    const mode = document.querySelector('input[name="aMode"]:checked').value; 
+    if (mode === 'gps') { 
+      navigator.geolocation.getCurrentPosition(p => { setBasePosition({ lat: p.coords.latitude, lng: p.coords.longitude }); }, e => alert("取得失敗")); 
+    } else alert("地図上をタップしてください"); 
+  };
+
+  document.getElementById('btnCalibrateGPS').onclick = () => {
+    const targetMark = document.getElementById('basePointSelect').value;
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(p => {
+        const myPos = { lat: p.coords.latitude, lng: p.coords.longitude };
+        if (confirm(`現在地で ${targetMark} 点の位置を上書き補正します。よろしいですか？`)) {
+          setBasePosition(myPos);
+        }
+      }, e => alert("現在地の取得に失敗しました。GPS設定を確認してください。"), {
+        enableHighAccuracy: true,
+        maximumAge: 0,
+        timeout: 5000
+      });
+    } else {
+      alert("お使いの端末はGPS機能に対応していません。");
+    }
   };
 
   ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'K', 'S'].forEach(l => { 
     const btn = document.getElementById('btn' + l); 
-    if (btn) btn.onclick = () => { if(points[l]) shareCoords(l, points[l]); }; 
+    if (btn) btn.onclick = () => shareCoords(l, points[l]); 
   });
 
   document.getElementById('courseSelect').onchange = (e) => {
