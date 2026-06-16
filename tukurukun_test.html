@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-<title>コース作るくん v7.4.4 by Popolo App.com</title>
+<title>コース作るくん v7.4.5 by Popolo App.com</title>
 <style>
 :root{ --red:#ff3b30; --blue:#0000ff; --yellow:#ffff00; --green:#28a745; --purple:#6a1b9a; --orange:#f57c00; --gray:#555; --navy:#000080; --pink:#ffb3c1; --teal:#5ac8fa; }
 body { font-family: -apple-system,BlinkMacSystemFont,"Helvetica Neue","Hiragino Kaku Gothic ProN","メイリオ",Meiryo,sans-serif; margin:10px; color:#222; overflow-x: hidden; }
@@ -37,7 +37,6 @@ h2 { margin:0 0 8px 0; font-size:18px; }
 #map { width:100%; height:450px; border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,0.2); transition: height 0.3s ease; }
 #map.fullscreen { height: calc(100vh - 30px); }
 
-/* 全画面時にも確実に最前面へ配置 */
 #btnMapResize { position: absolute; top: 10px; right: 10px; z-index: 1005; background: rgba(255,255,255,0.9); border: 1px solid #ccc; padding: 8px 12px; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
 
 #coordsContainer { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; justify-content: space-between; }
@@ -67,7 +66,7 @@ h2 { margin:0 0 8px 0; font-size:18px; }
 </head>
 <body>
 
-<h2>コース作るくん <span style="font-size:0.7em;">v7.4.4 by Popolo App.com</span></h2>
+<h2>コース作るくん <span style="font-size:0.7em;">v7.4.5 by Popolo App.com</span></h2>
 
 <div class="input-row">
   <div class="input-group"><label>風向</label><input type="number" id="wind" step="any" placeholder="0"></div>
@@ -187,6 +186,9 @@ h2 { margin:0 0 8px 0; font-size:18px; }
   </div>
 </div>
 
+<input type="hidden" id="lastBaseLat">
+<input type="hidden" id="lastBaseLng">
+
 <input type="hidden" id="latA"><input type="hidden" id="lngA">
 
 <script>
@@ -197,6 +199,7 @@ const COLORS = { A:'#f57c00', B:'#f57c00', C:'#f57c00', D:'#f57c00', E:'#f57c00'
 let activeSelectPoint = 'A';
 
 let currentIsPort = true;
+let currentBasePoint = 'A'; // 現在どの点をロックしているかを保持
 let path = [];
 
 function checkUrlParams() {
@@ -208,7 +211,14 @@ function checkUrlParams() {
   const theta = urlParams.get('theta');
   const course = urlParams.get('course');
 
-  if (lat && lng) updateAPos(parseFloat(lat), parseFloat(lng));
+  if (lat && lng) {
+    currentBasePoint = 'A';
+    document.getElementById('basePointSelect').value = 'A';
+    updateAPos(parseFloat(lat), parseFloat(lng));
+    // ロック用の基準点座標も同期
+    document.getElementById('lastBaseLat').value = lat;
+    document.getElementById('lastBaseLng').value = lng;
+  }
   if (twd) document.getElementById('wind').value = twd;
   if (dist) document.getElementById('dist').value = dist;
   if (theta) document.getElementById('theta').value = theta;
@@ -320,17 +330,40 @@ function getPointsStructure(baseA, wind, dist, theta, course, isPort) {
 
 function calculateCourse(isPort){
   currentIsPort = isPort;
+
+  // A点以外の基準点がロックされている場合、現在の設定値でA点の位置を再逆算してから全体の配置を行う
+  const baseLat = parseFloat(document.getElementById('lastBaseLat').value);
+  const baseLng = parseFloat(document.getElementById('lastBaseLng').value);
+  
+  if(!isNaN(baseLat) && !isNaN(baseLng) && currentBasePoint !== 'A') {
+    const wind=parseFloat(document.getElementById('wind').value)||0, dist=parseFloat(document.getElementById('dist').value)||0, theta=parseFloat(document.getElementById('theta').value)||0, course=document.getElementById('courseSelect').value;
+    
+    // 仮想のA(0,0)をベースに仮の構造体を組む
+    const tempStructure = getPointsStructure({lat:0, lng:0}, wind, dist, theta, course, isPort);
+    const targetRel = tempStructure[currentBasePoint];
+    
+    if(targetRel && (targetRel.lat !== 0 || targetRel.lng !== 0)) {
+      const R=6378137, dy=targetRel.lat*(Math.PI/180)*R, dx=targetRel.lng*(Math.PI/180)*R;
+      const d=Math.sqrt(dx*dx+dy*dy), brng=(Math.atan2(dx,dy)*180/Math.PI+360)%360;
+      const realA = movePoint(baseLat, baseLng, d, (brng+180)%360);
+      updateAPos(realA.lat, realA.lng);
+    }
+  }
+
   const latA=parseFloat(document.getElementById('latA').value), lngA=parseFloat(document.getElementById('lngA').value);
   if(isNaN(latA)||isNaN(lngA)) return;
   const wind=parseFloat(document.getElementById('wind').value)||0, dist=parseFloat(document.getElementById('dist').value)||0, theta=parseFloat(document.getElementById('theta').value)||0, course=document.getElementById('courseSelect').value;
+  
   polylines.forEach(pl => pl.setMap(null)); polylines = [];
   Object.keys(points).forEach(k => { if(circles[k])circles[k].setMap(null); if(markersLabel[k])markersLabel[k].setMap(null); points[k]=null; });
+  
+  // A点ベースで全ての点の絶対座標を確定
   points = getPointsStructure({lat:latA, lng:lngA}, wind, dist, theta, course, isPort);
 
   const isM = (course==='mcourse'), isF8 = (course==='figure8'), isS = (course==='sausage'), is5J = (course==='5jibe'), isJW3 = (course==='jwsa3'), isJW5 = (course==='jwsa5'), isJW = (course==='jwsa'), isJW2 = (course==='jwsa2');
 
   document.getElementById('btnC').style.display = (isM || isF8 || isS || is5J || isJW3 || isJW5) ? 'flex' : 'none';
-  document.getElementById('btnD').style.display = (isM || is5J || isJW3 || isJW5) ? 'flex' : 'none';
+  document.getElementById('btnD').style.display = (isM || 5J || isJW3 || isJW5) ? 'flex' : 'none';
   document.getElementById('btnE').style.display = (isM || isF8 || is5J || isJW3 || isJW5) ? 'flex' : 'none';
   document.getElementById('btnF').style.display = (isJW2 || isJW3 || isJW5 || is5J) ? 'flex' : 'none';
   document.getElementById('btnG').style.display = (isJW2 || isJW3 || isJW5 || is5J) ? 'flex' : 'none';
@@ -374,11 +407,19 @@ function updateDistModalContent(isJW3, is5J){
 
 function setBasePosition(pos) {
   const baseLabel = document.getElementById('basePointSelect').value;
+  currentBasePoint = baseLabel; // ロック対象のマークを記憶
+
+  // 最後にロックした実質的な基準点の緯度経度を隠し保持
+  document.getElementById('lastBaseLat').value = pos.lat.toFixed(6);
+  document.getElementById('lastBaseLng').value = pos.lng.toFixed(6);
+
   const wind=parseFloat(document.getElementById('wind').value)||0, dist=parseFloat(document.getElementById('dist').value)||0, theta=parseFloat(document.getElementById('theta').value)||0, course=document.getElementById('courseSelect').value;
   const tempStructure = getPointsStructure({lat:0,lng:0}, wind, dist, theta, course, currentIsPort);
   const targetRel = tempStructure[baseLabel];
-  if(!targetRel || (targetRel.lat === 0 && targetRel.lng === 0)) { updateAPos(pos.lat, pos.lng); }
-  else {
+  
+  if(!targetRel || (targetRel.lat === 0 && targetRel.lng === 0)) { 
+    updateAPos(pos.lat, pos.lng); 
+  } else {
     const R=6378137, dy=targetRel.lat*(Math.PI/180)*R, dx=targetRel.lng*(Math.PI/180)*R;
     const d=Math.sqrt(dx*dx+dy*dy), brng=(Math.atan2(dx,dy)*180/Math.PI+360)%360;
     const realA = movePoint(pos.lat, pos.lng, d, (brng+180)%360);
@@ -512,10 +553,22 @@ window.addEventListener('load', ()=>{
     calculateCourse(currentIsPort);
   };
 
-  document.getElementById('btnOpenCoordModal').onclick = () => { document.getElementById('modalOverlay').style.display = 'flex'; };
+  document.getElementById('btnOpenCoordModal').onclick = () => { 
+    // 現在選択されている基準点ベースでモーダルに表示する
+    if (points[currentBasePoint]) {
+      document.getElementById('modalLat').value = points[currentBasePoint].lat.toFixed(6);
+      document.getElementById('modalLng').value = points[currentBasePoint].lng.toFixed(6);
+    }
+    document.getElementById('modalOverlay').style.display = 'flex'; 
+  };
+  
   document.getElementById('btnModalClose').onclick = () => {
     const lat = parseFloat(document.getElementById('modalLat').value), lng = parseFloat(document.getElementById('modalLng').value);
-    if(!isNaN(lat) && !isNaN(lng)) { updateAPos(lat, lng); if(map) map.setCenter({lat, lng}); calculateCourse(currentIsPort); }
+    if(!isNaN(lat) && !isNaN(lng)) { 
+      // 手動修正された場合もその時点のセレクト値を基準点としてロックする
+      const baseLabel = document.getElementById('basePointSelect').value;
+      setBasePosition({lat, lng}); 
+    }
     document.getElementById('modalOverlay').style.display = 'none';
   };
   document.getElementById('btnOpenDistModal').onclick = () => { document.getElementById('distModalOverlay').style.display = 'flex'; };
