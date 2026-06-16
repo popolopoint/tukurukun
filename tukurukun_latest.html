@@ -3,14 +3,13 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-<title>コース作るくん v6.7.1k by Popolo App.com</title>
+<title>コース作るくん v6.7.2 by Popolo App.com</title>
 <style>
 :root{ --red:#ff3b30; --blue:#0000ff; --yellow:#ffff00; --green:#28a745; --purple:#6a1b9a; --orange:#f57c00; --gray:#555; --navy:#000080; --pink:#ff2d55; --teal:#5ac8fa; }
 body { font-family: -apple-system,BlinkMacSystemFont,"Helvetica Neue","Hiragino Kaku Gothic ProN","メイリオ",Meiryo,sans-serif; margin:10px; color:#222; overflow-x: hidden; }
 h2 { margin:0 0 8px 0; font-size:18px; }
-#version { position:absolute; right:12px; top:12px; color:#666; font-size:13px; }
 
-.input-row { display: flex; dap: 5px; width: 100%; margin-bottom: 10px; }
+.input-row { display: flex; gap: 5px; width: 100%; margin-bottom: 10px; }
 .input-group { flex: 1; display: flex; flex-direction: column; }
 .input-group label { font-size: 11px; font-weight: bold; margin-bottom: 2px; }
 .input-group input { font-size: 24px; padding: 8px 4px; width: 100%; box-sizing: border-box; border-radius: 6px; border: 1px solid #ccc; text-align: center; }
@@ -31,7 +30,11 @@ h2 { margin:0 0 8px 0; font-size:18px; }
 .radio-group { margin: 10px 0; display: flex; gap: 15px; align-items: center; }
 #btnSetCurrent { background: var(--red); color:white; border:none; padding:10px 15px; border-radius:6px; font-weight:bold; margin-top:10px; width:100%; font-size:18px; }
 
-#map { width:100%; height:675px; border-radius:8px; margin-top:10px; box-shadow:0 1px 4px rgba(0,0,0,0.2); }
+/* マップラップとリサイズ用のスタイル */
+#mapContainer { position: relative; width: 100%; margin-top: 10px; }
+#map { width:100%; height:450px; border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,0.2); transition: height 0.3s ease; }
+#map.fullscreen { height: calc(100vh - 30px); }
+#btnMapResize { position: absolute; top: 10px; right: 10px; z-index: 50; background: rgba(255,255,255,0.9); border: 1px solid #ccc; padding: 8px 12px; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
 
 #coordsContainer { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; justify-content: space-between; }
 .pointBox { border-radius:50%; width:40px; height:40px; display:flex; justify-content:center; align-items:center; color:white; font-weight:bold; cursor:pointer; font-size: 0.9em; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
@@ -53,8 +56,7 @@ h2 { margin:0 0 8px 0; font-size:18px; }
 </head>
 <body>
 
-<h2>コース作るくん <span style="font-size:0.7em;">v6.7.1k by Popolo App.com</span></h2>
-<div id="version">v6.7.1k</div>
+<h2>コース作るくん <span style="font-size:0.7em;">v6.7.2 by Popolo App.com</span></h2>
 
 <div class="input-row">
   <div class="input-group"><label>風向</label><input type="number" id="wind" step="any" placeholder="0"></div>
@@ -70,7 +72,7 @@ h2 { margin:0 0 8px 0; font-size:18px; }
   <option value="jwsa">JWSA1</option>
   <option value="jwsa2">JWSA2</option>
   <option value="jwsa3">JWSA3</option>
-<option value="jwsa5">JWSA5</option>
+  <option value="jwsa5">JWSA5</option>
 </select>
 
 <div id="sausageSettings">
@@ -80,20 +82,12 @@ h2 { margin:0 0 8px 0; font-size:18px; }
   <label>S角度<br><input type="number" id="sAngle" class="compact-input" value="0"></label>
 </div>
 
-
-
-
-
-
-
 <div id="jwsaSettings">
   <label>AB<br><input type="number" id="distAB" class="compact-input" value="500"></label>
   <label>BG<br><input type="number" id="distBC" class="compact-input" value="500"></label>
   <label>GK<br><input type="number" id="distCD" class="compact-input" value="500"></label>
   <label>角G<br><input type="number" id="theta2" class="compact-input" value="60"></label>
 </div>
-
-
 
 <div id="jwsa2Settings">
   <label>AB<br><input type="number" id="distAB2" class="compact-input" value="500"></label>
@@ -103,10 +97,6 @@ h2 { margin:0 0 8px 0; font-size:18px; }
   <label>角B<br><input type="number" id="theta3_2" class="compact-input" value="45"></label> 
   <label>角G<br><input type="number" id="theta2_2" class="compact-input" value="60"></label>
 </div>
-
-
-
-
 
 <div id="jwsa3Settings">
   <label>AB<br><input type="number" id="distAB3" class="compact-input" value="500"></label>
@@ -153,7 +143,10 @@ h2 { margin:0 0 8px 0; font-size:18px; }
   <button id="btnOpenCoordModal" class="btn-sub">基準点緯度経度 修正/確認</button>
 </div>
 
-<div id="map"></div>
+<div id="mapContainer">
+  <button id="btnMapResize">全画面</button>
+  <div id="map"></div>
+</div>
 
 <div id="modalOverlay">
   <div class="modalContent">
@@ -174,11 +167,6 @@ h2 { margin:0 0 8px 0; font-size:18px; }
 
 <input type="hidden" id="latA"><input type="hidden" id="lngA">
 
-
-
-
-
-
 <script>
 let map, circles={}, markersLabel={}, polylines=[];
 let points = {A:null,B:null,C:null,D:null,E:null,F:null,G:null,S:null,K:null};
@@ -190,15 +178,7 @@ function checkUrlParams() {
   const urlParams = new URLSearchParams(window.location.search);
   const lat = urlParams.get('lat');
   const lng = urlParams.get('lng');
-
-
-
-
-
-
-const twd = urlParams.get('heading');
-
-
+  const twd = urlParams.get('heading');
   const dist = urlParams.get('dist');
   const theta = urlParams.get('theta');
   const course = urlParams.get('course');
@@ -279,7 +259,7 @@ function getPointsStructure(baseA, wind, dist, theta, course, isPort) {
         is5J = (course==='5jibe'), isF8 = (course==='figure8');
 
   if(isS){
-    const dAS = 100; // AS距離デフォルト100
+    const dAS = 100;
     const sAng = parseFloat(document.getElementById('sAngle').value) || 0;
     const bS = wind + (isPort ? (90 + theta + sAng) : (270 - theta - sAng));
     p.S = movePoint(p.A.lat, p.A.lng, dAS, bS);
@@ -290,7 +270,7 @@ function getPointsStructure(baseA, wind, dist, theta, course, isPort) {
   }
   else if(isJW || isJW2 || isJW3 || isJW5){
     const sfx = (isJW3 || isJW5) ? '3' : '2';
-    const dAB=parseFloat(document.getElementById('distAB'+sfx).value)||0, dBC=parseFloat(document.getElementById('distBC'+sfx).value)||0, dCD=parseFloat(document.getElementById('distCD'+sfx).value)||0, dDE=parseFloat(document.getElementById('distDE'+sfx).value)||0, thD=30, thB=45; // 角D:30, 角B:45デフォルト
+    const dAB=parseFloat(document.getElementById('distAB'+sfx).value)||0, dBC=parseFloat(document.getElementById('distBC'+sfx).value)||0, dCD=parseFloat(document.getElementById('distCD'+sfx).value)||0, dDE=parseFloat(document.getElementById('distDE'+sfx).value)||0, thD=30, thB=45;
     p.B = movePoint(p.A.lat, p.A.lng, dAB, isPort?wind+theta+90:wind-theta+270);
     const bF = isPort ? (wind+270+thB) : (wind+90-thB);
     p.F = movePoint(p.B.lat, p.B.lng, dBC, bF);
@@ -422,21 +402,7 @@ window.addEventListener('load', ()=>{
     const courseName = courseSelect.options[courseSelect.selectedIndex].text;
     const baseUrl = window.location.origin + window.location.pathname;
 
-
-
-
-
-
-
-// 修正後
-const params = `?lat=${points.A.lat.toFixed(6)}&lng=${points.A.lng.toFixed(6)}&heading=${wind}&dist=${dist}&theta=${theta}&course=${courseValue}`;
-
-
-
-
-
-
-   
+    const params = `?lat=${points.A.lat.toFixed(6)}&lng=${points.A.lng.toFixed(6)}&heading=${wind}&dist=${dist}&theta=${theta}&course=${courseValue}`;
     const shareUrl = baseUrl + params;
 
     let t = `【${courseName}】風向:${wind}°\n距離:${dist}m / 角度:${theta}°\n\n`;
@@ -482,26 +448,50 @@ const params = `?lat=${points.A.lat.toFixed(6)}&lng=${points.A.lng.toFixed(6)}&h
   document.getElementById('btnOpenDistModal').onclick = () => { document.getElementById('distModalOverlay').style.display = 'flex'; };
   document.getElementById('btnDistModalClose').onclick = () => { document.getElementById('distModalOverlay').style.display = 'none'; };
   
+  // マップサイズ切り替えロジック
+  document.getElementById('btnMapResize').onclick = (e) => {
+    const mapEl = document.getElementById('map');
+    const isFull = mapEl.classList.toggle('fullscreen');
+    e.target.textContent = isFull ? '通常画面' : '全画面';
+    
+    // 全画面時は地図の親コンテナを固定配置にする
+    const container = document.getElementById('mapContainer');
+    if (isFull) {
+      container.style.position = 'fixed';
+      container.style.top = '0';
+      container.style.left = '0';
+      container.style.width = '100vw';
+      container.style.height = '100vh';
+      container.style.zIndex = '999';
+      container.style.marginTop = '0';
+      mapEl.style.borderRadius = '0';
+    } else {
+      container.style.position = 'relative';
+      container.style.top = '';
+      container.style.left = '';
+      container.style.width = '100%';
+      container.style.height = '';
+      container.style.zIndex = '';
+      container.style.marginTop = '10px';
+      mapEl.style.borderRadius = '8px';
+    }
+    
+    // Google Mapsの描画更新
+    if (map) {
+      google.maps.event.trigger(map, 'resize');
+      // 描画更新後に中心点を再セット
+      const latA = parseFloat(document.getElementById('latA').value);
+      const lngA = parseFloat(document.getElementById('lngA').value);
+      if(!isNaN(latA) && !isNaN(lngA)) {
+        map.setCenter({lat: latA, lng: lngA});
+      }
+    }
+  };
+
   initMap();
 });
 </script>
 
-
-
-
-
 <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAHhxSJK-IhYiT9XBRwE1MX7DHhghBQQQk&callback=initMap" async defer></script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
