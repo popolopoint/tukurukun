@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-<title>コース作るくん v7.4.5 by Popolo App.com</title>
+<title>コース作るくん v7.4.6 by Popolo App.com</title>
 <style>
 :root{ --red:#ff3b30; --blue:#0000ff; --yellow:#ffff00; --green:#28a745; --purple:#6a1b9a; --orange:#f57c00; --gray:#555; --navy:#000080; --pink:#ffb3c1; --teal:#5ac8fa; }
 body { font-family: -apple-system,BlinkMacSystemFont,"Helvetica Neue","Hiragino Kaku Gothic ProN","メイリオ",Meiryo,sans-serif; margin:10px; color:#222; overflow-x: hidden; }
@@ -66,7 +66,7 @@ h2 { margin:0 0 8px 0; font-size:18px; }
 </head>
 <body>
 
-<h2>コース作るくん <span style="font-size:0.7em;">v7.4.5 by Popolo App.com</span></h2>
+<h2>コース作るくん <span style="font-size:0.7em;">v7.4.6 by Popolo App.com</span></h2>
 
 <div class="input-row">
   <div class="input-group"><label>風向</label><input type="number" id="wind" step="any" placeholder="0"></div>
@@ -95,7 +95,7 @@ h2 { margin:0 0 8px 0; font-size:18px; }
 <div id="jwsaSettings">
   <label>AB<br><input type="number" id="distAB" class="compact-input" value="500"></label>
   <label>BG<br><input type="number" id="distBC" class="compact-input" value="500"></label>
-  <label>GK<br><input type="number" id="distCD" class="compact-input" value="500"></label>
+  <label>GK<br><input type="number" id="distCD`" class="compact-input" value="500"></label>
   <label>角G<br><input type="number" id="theta2" class="compact-input" value="60"></label>
 </div>
 
@@ -186,10 +186,10 @@ h2 { margin:0 0 8px 0; font-size:18px; }
   </div>
 </div>
 
-<input type="hidden" id="lastBaseLat">
-<input type="hidden" id="lastBaseLng">
+<input type="hidden" id="lastBaseLat" value="26.3318">
+<input type="hidden" id="lastBaseLng" value="127.9179">
 
-<input type="hidden" id="latA"><input type="hidden" id="lngA">
+<input type="hidden" id="latA" value="26.3318"><input type="hidden" id="lngA" value="127.9179">
 
 <script>
 let map, circles={}, markersLabel={}, polylines=[];
@@ -199,7 +199,7 @@ const COLORS = { A:'#f57c00', B:'#f57c00', C:'#f57c00', D:'#f57c00', E:'#f57c00'
 let activeSelectPoint = 'A';
 
 let currentIsPort = true;
-let currentBasePoint = 'A'; // 現在どの点をロックしているかを保持
+let currentBasePoint = 'A';
 let path = [];
 
 function checkUrlParams() {
@@ -215,9 +215,6 @@ function checkUrlParams() {
     currentBasePoint = 'A';
     document.getElementById('basePointSelect').value = 'A';
     updateAPos(parseFloat(lat), parseFloat(lng));
-    // ロック用の基準点座標も同期
-    document.getElementById('lastBaseLat').value = lat;
-    document.getElementById('lastBaseLng').value = lng;
   }
   if (twd) document.getElementById('wind').value = twd;
   if (dist) document.getElementById('dist').value = dist;
@@ -231,6 +228,8 @@ function checkUrlParams() {
 
 function initMap(){
   let centerPos = { lat: 26.3318, lng: 127.9179 };
+  checkUrlParams();
+
   const latA = parseFloat(document.getElementById('latA').value);
   const lngA = parseFloat(document.getElementById('lngA').value);
   if(!isNaN(latA) && !isNaN(lngA)) centerPos = { lat: latA, lng: lngA };
@@ -269,8 +268,9 @@ function initMap(){
     });
   }
 
-  checkUrlParams();
-  if(document.getElementById('wind').value && !isNaN(latA)) setTimeout(() => calculateCourse(true), 500);
+  if(document.getElementById('wind').value && !isNaN(latA)) {
+    setTimeout(() => calculateCourse(true), 500);
+  }
 }
 
 function movePoint(lat,lng,dist,bearing){
@@ -331,14 +331,13 @@ function getPointsStructure(baseA, wind, dist, theta, course, isPort) {
 function calculateCourse(isPort){
   currentIsPort = isPort;
 
-  // A点以外の基準点がロックされている場合、現在の設定値でA点の位置を再逆算してから全体の配置を行う
   const baseLat = parseFloat(document.getElementById('lastBaseLat').value);
   const baseLng = parseFloat(document.getElementById('lastBaseLng').value);
   
+  // NaNチェックを追加して初期化時のクラッシュを防ぐ
   if(!isNaN(baseLat) && !isNaN(baseLng) && currentBasePoint !== 'A') {
     const wind=parseFloat(document.getElementById('wind').value)||0, dist=parseFloat(document.getElementById('dist').value)||0, theta=parseFloat(document.getElementById('theta').value)||0, course=document.getElementById('courseSelect').value;
     
-    // 仮想のA(0,0)をベースに仮の構造体を組む
     const tempStructure = getPointsStructure({lat:0, lng:0}, wind, dist, theta, course, isPort);
     const targetRel = tempStructure[currentBasePoint];
     
@@ -357,13 +356,12 @@ function calculateCourse(isPort){
   polylines.forEach(pl => pl.setMap(null)); polylines = [];
   Object.keys(points).forEach(k => { if(circles[k])circles[k].setMap(null); if(markersLabel[k])markersLabel[k].setMap(null); points[k]=null; });
   
-  // A点ベースで全ての点の絶対座標を確定
   points = getPointsStructure({lat:latA, lng:lngA}, wind, dist, theta, course, isPort);
 
   const isM = (course==='mcourse'), isF8 = (course==='figure8'), isS = (course==='sausage'), is5J = (course==='5jibe'), isJW3 = (course==='jwsa3'), isJW5 = (course==='jwsa5'), isJW = (course==='jwsa'), isJW2 = (course==='jwsa2');
 
   document.getElementById('btnC').style.display = (isM || isF8 || isS || is5J || isJW3 || isJW5) ? 'flex' : 'none';
-  document.getElementById('btnD').style.display = (isM || 5J || isJW3 || isJW5) ? 'flex' : 'none';
+  document.getElementById('btnD').style.display = (isM || is5J || isJW3 || isJW5) ? 'flex' : 'none';
   document.getElementById('btnE').style.display = (isM || isF8 || is5J || isJW3 || isJW5) ? 'flex' : 'none';
   document.getElementById('btnF').style.display = (isJW2 || isJW3 || isJW5 || is5J) ? 'flex' : 'none';
   document.getElementById('btnG').style.display = (isJW2 || isJW3 || isJW5 || is5J) ? 'flex' : 'none';
@@ -407,9 +405,8 @@ function updateDistModalContent(isJW3, is5J){
 
 function setBasePosition(pos) {
   const baseLabel = document.getElementById('basePointSelect').value;
-  currentBasePoint = baseLabel; // ロック対象のマークを記憶
+  currentBasePoint = baseLabel;
 
-  // 最後にロックした実質的な基準点の緯度経度を隠し保持
   document.getElementById('lastBaseLat').value = pos.lat.toFixed(6);
   document.getElementById('lastBaseLng').value = pos.lng.toFixed(6);
 
@@ -433,6 +430,12 @@ function updateAPos(lat, lng) {
   document.getElementById('lngA').value = lng.toFixed(6);
   document.getElementById('modalLat').value = lat.toFixed(6);
   document.getElementById('modalLng').value = lng.toFixed(6);
+  
+  // A点が動いたら、それがA点基準のロック座標にもなるよう同期
+  if(currentBasePoint === 'A') {
+    document.getElementById('lastBaseLat').value = lat.toFixed(6);
+    document.getElementById('lastBaseLng').value = lng.toFixed(6);
+  }
 }
 
 function drawPoint(label,pos,color,displayText){
@@ -554,7 +557,6 @@ window.addEventListener('load', ()=>{
   };
 
   document.getElementById('btnOpenCoordModal').onclick = () => { 
-    // 現在選択されている基準点ベースでモーダルに表示する
     if (points[currentBasePoint]) {
       document.getElementById('modalLat').value = points[currentBasePoint].lat.toFixed(6);
       document.getElementById('modalLng').value = points[currentBasePoint].lng.toFixed(6);
@@ -565,7 +567,6 @@ window.addEventListener('load', ()=>{
   document.getElementById('btnModalClose').onclick = () => {
     const lat = parseFloat(document.getElementById('modalLat').value), lng = parseFloat(document.getElementById('modalLng').value);
     if(!isNaN(lat) && !isNaN(lng)) { 
-      // 手動修正された場合もその時点のセレクト値を基準点としてロックする
       const baseLabel = document.getElementById('basePointSelect').value;
       setBasePosition({lat, lng}); 
     }
