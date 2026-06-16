@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-<title>コース作るくん v6.7.2 by Popolo App.com</title>
+<title>コース作るくん v6.7.3 by Popolo App.com</title>
 <style>
 :root{ --red:#ff3b30; --blue:#0000ff; --yellow:#ffff00; --green:#28a745; --purple:#6a1b9a; --orange:#f57c00; --gray:#555; --navy:#000080; --pink:#ff2d55; --teal:#5ac8fa; }
 body { font-family: -apple-system,BlinkMacSystemFont,"Helvetica Neue","Hiragino Kaku Gothic ProN","メイリオ",Meiryo,sans-serif; margin:10px; color:#222; overflow-x: hidden; }
@@ -28,9 +28,9 @@ h2 { margin:0 0 8px 0; font-size:18px; }
 #inputsMode { margin:15px 0; padding:12px; background:#f0f7ff; border-radius:8px; font-size: 16px; color:#333; border:1px solid #d0e0f0; }
 #inputsMode select { font-size: 22px; padding: 5px; margin: 0 5px; }
 .radio-group { margin: 10px 0; display: flex; gap: 15px; align-items: center; }
-#btnSetCurrent { background: var(--red); color:white; border:none; padding:10px 15px; border-radius:6px; font-weight:bold; margin-top:10px; width:100%; font-size:18px; }
+#btnSetCurrent { background: #007aff; color:white; border:none; padding:10px 15px; border-radius:6px; font-weight:bold; margin-top:5px; width:100%; font-size:18px; }
+#btnCalibrateGPS { background: var(--red); color:white; border:none; padding:12px 15px; border-radius:6px; font-weight:bold; margin-top:10px; width:100%; font-size:18px; box-shadow: 0 2px 6px rgba(255,59,48,0.3); }
 
-/* マップラップとリサイズ用のスタイル */
 #mapContainer { position: relative; width: 100%; margin-top: 10px; }
 #map { width:100%; height:450px; border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,0.2); transition: height 0.3s ease; }
 #map.fullscreen { height: calc(100vh - 30px); }
@@ -56,7 +56,7 @@ h2 { margin:0 0 8px 0; font-size:18px; }
 </head>
 <body>
 
-<h2>コース作るくん <span style="font-size:0.7em;">v6.7.2 by Popolo App.com</span></h2>
+<h2>コース作るくん <span style="font-size:0.7em;">v6.7.3 by Popolo App.com</span></h2>
 
 <div class="input-row">
   <div class="input-group"><label>風向</label><input type="number" id="wind" step="any" placeholder="0"></div>
@@ -114,7 +114,7 @@ h2 { margin:0 0 8px 0; font-size:18px; }
 </div>
 
 <div id="inputsMode">
-  <strong>基準点：</strong>
+  <strong>基準点設定・補正：</strong>
   <select id="basePointSelect">
     <option value="A" selected>A点</option><option value="B">B点</option><option value="C">C点</option>
     <option value="D">D点</option><option value="E">E点</option><option value="F">F点</option><option value="G">G点</option><option value="S">S点</option><option value="K">K点</option>
@@ -123,7 +123,8 @@ h2 { margin:0 0 8px 0; font-size:18px; }
     <label><input type="radio" name="aMode" value="gps" checked> 現在地をセット</label>
     <label><input type="radio" name="aMode" value="map"> マップ指定</label>
   </div>
-  <button id="btnSetCurrent">反映</button>
+  <button id="btnSetCurrent">展開・反映</button>
+  <button id="btnCalibrateGPS">選択中のマークを現在地で補正</button>
 </div>
 
 <div id="coordsContainer">
@@ -419,6 +420,24 @@ window.addEventListener('load', ()=>{
     } else alert("地図上をタップしてください"); 
   };
 
+  document.getElementById('btnCalibrateGPS').onclick = () => {
+    const targetMark = document.getElementById('basePointSelect').value;
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(p => {
+        const myPos = { lat: p.coords.latitude, lng: p.coords.longitude };
+        if (confirm(`現在地で ${targetMark} 点の位置を上書き補正します。よろしいですか？`)) {
+          setBasePosition(myPos);
+        }
+      }, e => alert("現在地の取得に失敗しました。GPS設定を確認してください。"), {
+        enableHighAccuracy: true,
+        maximumAge: 0,
+        timeout: 5000
+      });
+    } else {
+      alert("お使いの端末はGPS機能に対応していません。");
+    }
+  };
+
   ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'K', 'S'].forEach(l => { 
     const btn = document.getElementById('btn' + l); 
     if (btn) btn.onclick = () => shareCoords(l, points[l]); 
@@ -448,13 +467,11 @@ window.addEventListener('load', ()=>{
   document.getElementById('btnOpenDistModal').onclick = () => { document.getElementById('distModalOverlay').style.display = 'flex'; };
   document.getElementById('btnDistModalClose').onclick = () => { document.getElementById('distModalOverlay').style.display = 'none'; };
   
-  // マップサイズ切り替えロジック
   document.getElementById('btnMapResize').onclick = (e) => {
     const mapEl = document.getElementById('map');
     const isFull = mapEl.classList.toggle('fullscreen');
     e.target.textContent = isFull ? '通常画面' : '全画面';
     
-    // 全画面時は地図の親コンテナを固定配置にする
     const container = document.getElementById('mapContainer');
     if (isFull) {
       container.style.position = 'fixed';
@@ -476,10 +493,8 @@ window.addEventListener('load', ()=>{
       mapEl.style.borderRadius = '8px';
     }
     
-    // Google Mapsの描画更新
     if (map) {
       google.maps.event.trigger(map, 'resize');
-      // 描画更新後に中心点を再セット
       const latA = parseFloat(document.getElementById('latA').value);
       const lngA = parseFloat(document.getElementById('lngA').value);
       if(!isNaN(latA) && !isNaN(lngA)) {
