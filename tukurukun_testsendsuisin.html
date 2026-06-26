@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-<title>コース作るくん v8.1.1 by Popolo App.com</title>
+<title>コース作るくん v8.1.2 by Popolo App.com</title>
 <style>
 :root{ --red:#ff3b30; --blue:#0000ff; --yellow:#ffff00; --green:#28a745; --purple:#6a1b9a; --orange:#f57c00; --gray:#555; --navy:#000080; --pink:#ff2d55; --teal:#5ac8fa; --cyan:#00bfff; }
 body { font-family: -apple-system,BlinkMacSystemFont,"Helvetica Neue","Hiragino Kaku Gothic ProN","メイリオ",Meiryo,sans-serif; margin:10px; color:#222; overflow-x: hidden; }
@@ -19,7 +19,6 @@ h2 { margin:0 0 8px 0; font-size:18px; }
 .compact-input { font-size: 18px !important; padding: 6px 2px !important; width: 55px !important; text-align:center; border-radius:6px; border:1px solid #ccc; }
 #sausageSettings, #jwsaSettings, #jwsa2Settings, #jwsa3Settings { display:none; flex-wrap:nowrap; align-items:center; gap:4px; background:#f0f0f0; padding:5px; border-radius:8px; margin-bottom:10px; width: 100%; box-sizing: border-box; overflow-x: auto; }
 
-/* ボタンを4列に変更 */
 .main-buttons { display: grid; grid-template-columns: 1fr 1fr 0.8fr 0.8fr; gap: 6px; width: 100%; margin: 10px 0; }
 .main-buttons button { font-size: 16px; padding: 12px 2px; border-radius: 10px; border: none; color: white; cursor: pointer; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.16); display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.2; }
 #btnSendSuisin { background: var(--cyan); color: #fff; }
@@ -57,7 +56,7 @@ h2 { margin:0 0 8px 0; font-size:18px; }
 </head>
 <body>
 
-<h2>コース作るくん <span style="font-size:0.7em;">v8.1.1 by Popolo App.com</span></h2>
+<h2>コース作るくん <span style="font-size:0.7em;">v8.1.2 by Popolo App.com</span></h2>
 
 <div class="input-row">
   <div class="input-group"><label>風向</label><input type="number" id="wind" step="any" placeholder="0"></div>
@@ -390,7 +389,6 @@ function shareCoords(l, p) {
   }
 }
 
-// 共通の連携データオブジェクト生成関数
 function generateSuisinUrl() {
   if (!points || !points.A) return null;
   const courseSelect = document.getElementById('courseSelect');
@@ -414,19 +412,15 @@ window.addEventListener('load', ()=>{
   document.getElementById('btnStarboard').onclick=()=>calculateCourse(false);
   document.getElementById('btnPort').onclick=()=>calculateCourse(true);
 
-  // 【新設】水深測ったろう専用送信ボタン
+  // 【修正】水深測ったろうへ送るボタン：直接URLを開く挙動に変更
   document.getElementById('btnSendSuisin').onclick = () => {
     const hakattarouUrl = generateSuisinUrl();
     if (!hakattarouUrl) { alert("地点データがありません。"); return; }
     
-    const courseSelect = document.getElementById('courseSelect');
-    const courseName = courseSelect.options[courseSelect.selectedIndex].text;
-    
-    let t = `🌊 水深測っ太郎のマップに表示（${courseName}）\n${hakattarouUrl}`;
-    if (navigator.share) navigator.share({ text: t }).catch(() => {}); else alert(t);
+    // 直接新しいタブ/ウィンドウで水深測ったろうを開く
+    window.open(hakattarouUrl, '_blank');
   };
 
-  // 【維持】従来のデータ送信ボタン
   document.getElementById('btnShareAll').onclick = () => {
     if (!points || !points.A) { alert("地点データがありません。"); return; }
     const wind = document.getElementById('wind').value || 0;
@@ -439,7 +433,6 @@ window.addEventListener('load', ()=>{
 
     const params = `?lat=${points.A.lat.toFixed(6)}&lng=${points.A.lng.toFixed(6)}&heading=${wind}&dist=${dist}&theta=${theta}&course=${courseValue}`;
     const shareUrl = baseUrl + params;
-    const hakattarouUrl = generateSuisinUrl();
 
     let t = `【${courseName}】風向:${wind}°\n距離:${dist}m / 角度:${theta}°\n\n`;
     const order = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'K', 'S'];
