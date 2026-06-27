@@ -42,7 +42,7 @@ h2 { margin:0 0 8px 0; font-size:18px; }
 .btn-sub { background:#f8f8f8; border:1px solid #ccc; padding:6px 10px; border-radius:6px; font-size:12px; cursor:pointer; font-weight: bold; color: #444; }
 
 #modalOverlay, #distModalOverlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:1000; justify-content:center; align-items:center; }
-.modalContent { background:white; padding:20px; border-radius:12px; width:90%; max-width:400px; box-shadow:0 4px 20px rgba(0,0,0,0.3); }
+.modalContent { background:white; padding:20px; border-radius:12px; width:95%; max-width:420px; box-shadow:0 4px 20px rgba(0,0,0,0.3); box-sizing: border-box; }
 .modalContent h3 { margin-top:0; font-size:18px; border-bottom: 2px solid #eee; padding-bottom: 8px; }
 .modal-input-group { margin-bottom:15px; }
 .modal-input-group label { display:block; font-size:12px; font-weight:bold; margin-bottom:4px; }
@@ -52,9 +52,9 @@ h2 { margin:0 0 8px 0; font-size:18px; }
 .dist-list { list-style: none; padding: 0; margin: 0; }
 .dist-item { background: #f9f9f9; padding: 10px; border-bottom: 1px solid #eee; font-size: 15px; font-weight: bold; }
 
-.color-picker-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 5px; }
-.color-picker-item { display: flex; flex-direction: column; align-items: center; font-size: 11px; font-weight: bold; }
-.color-picker-item input[type="color"] { width: 100%; height: 30px; border: 1px solid #ccc; border-radius: 4px; padding: 0; cursor: pointer; background: none; }
+.color-select-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 8px; }
+.color-select-item { display: flex; flex-direction: column; gap: 2px; font-size: 13px; font-weight: bold; }
+.color-select-item select { font-size: 16px; padding: 6px; border-radius: 6px; border: 1px solid #ccc; background: #fff; width: 100%; }
 </style>
 </head>
 <body>
@@ -159,17 +159,17 @@ h2 { margin:0 0 8px 0; font-size:18px; }
     <div class="modal-input-group"><label>経度 (Lng)</label><input type="number" id="modalLng" step="any"></div>
     
     <div class="modal-input-group">
-      <label>各マークの色設定</label>
-      <div class="color-picker-grid">
-        <div class="color-picker-item">A <input type="color" id="colA" value="#ff3b30"></div>
-        <div class="color-picker-item">B <input type="color" id="colB" value="#ffff00"></div>
-        <div class="color-picker-item">C <input type="color" id="colC" value="#f57c00"></div>
-        <div class="color-picker-item">D <input type="color" id="colD" value="#ff2d55"></div>
-        <div class="color-picker-item">E <input type="color" id="colE" value="#32cd32"></div>
-        <div class="color-picker-item">F <input type="color" id="colF" value="#0000ff"></div>
-        <div class="color-picker-item">G <input type="color" id="colG" value="#6a1b9a"></div>
-        <div class="color-picker-item">K <input type="color" id="colK" value="#ffffff"></div>
-        <div class="color-picker-item">S <input type="color" id="colS" value="#000000"></div>
+      <label>各マークの色設定（限定9色）</label>
+      <div class="color-select-grid">
+        <div class="color-select-item">A点 <select id="colA"></select></div>
+        <div class="color-select-item">B点 <select id="colB"></select></div>
+        <div class="color-select-item">C点 <select id="colC"></select></div>
+        <div class="color-select-item">D点 <select id="colD"></select></div>
+        <div class="color-select-item">E点 <select id="colE"></select></div>
+        <div class="color-select-item">F点 <select id="colF"></select></div>
+        <div class="color-select-item">G点 <select id="colG"></select></div>
+        <div class="color-select-item">K点 <select id="colK"></select></div>
+        <div class="color-select-item">S点 <select id="colS"></select></div>
       </div>
     </div>
     
@@ -190,10 +190,43 @@ h2 { margin:0 0 8px 0; font-size:18px; }
 <script>
 let map, circles={}, markersLabel={}, polylines=[];
 let points = {A:null,B:null,C:null,D:null,E:null,F:null,G:null,S:null,K:null};
-// 赤, 黄色, オレンジ, ピンク, 黄緑, 青, 紫, 白, 黒 をデフォルトにマッピング
+
+// 指定された9色をカラーコード化
+const COLOR_PALETTE = [
+  { name: '赤', hex: '#ff3b30' },
+  { name: '黄色', hex: '#ffff00' },
+  { name: 'オレンジ', hex: '#f57c00' },
+  { name: 'ピンク', hex: '#ff2d55' },
+  { name: '黄緑', hex: '#32cd32' },
+  { name: '青', hex: '#0000ff' },
+  { name: '紫', hex: '#6a1b9a' },
+  { name: '白', hex: '#ffffff' },
+  { name: '黒', hex: '#000000' }
+];
+
+// 初期設定用のカラーマッピング
 let COLORS = { A:'#ff3b30', B:'#ffff00', C:'#f57c00', D:'#ff2d55', E:'#32cd32', F:'#0000ff', G:'#6a1b9a', K:'#ffffff', S:'#000000' };
 let currentIsPort = true;
 let path = [];
+
+// モーダル内のセレクトボックスに選択肢を生成する関数
+function setupColorSelects() {
+  const keys = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'K', 'S'];
+  keys.forEach(k => {
+    const sel = document.getElementById('col' + k);
+    if (!sel) return;
+    sel.innerHTML = ''; // クリア
+    COLOR_PALETTE.forEach(color => {
+      const opt = document.createElement('option');
+      opt.value = color.hex;
+      opt.textContent = color.name;
+      if (COLORS[k] === color.hex) {
+        opt.selected = true;
+      }
+      sel.appendChild(opt);
+    });
+  });
+}
 
 function checkUrlParams() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -280,7 +313,7 @@ function getPointsStructure(baseA, wind, dist, theta, course, isPort) {
         is5J = (course==='5jibe'), isF8 = (course==='figure8');
 
   if(isS){
-    const dAS = 100; // ソーセージ設定のAS距離デフォルト
+    const dAS = 100;
     const sAng = parseFloat(document.getElementById('sAngle').value) || 0;
     const bS = wind + (isPort ? (90 + theta + sAng) : (270 - theta - sAng));
     p.S = movePoint(p.A.lat, p.A.lng, dAS, bS);
@@ -447,6 +480,8 @@ function generateSuisinUrl() {
 }
 
 window.addEventListener('load', ()=>{ 
+  setupColorSelects();
+
   document.getElementById('btnStarboard').onclick=()=>calculateCourse(false);
   document.getElementById('btnPort').onclick=()=>calculateCourse(true);
 
@@ -511,8 +546,8 @@ window.addEventListener('load', ()=>{
     const lat = parseFloat(document.getElementById('modalLat').value), lng = parseFloat(document.getElementById('modalLng').value);
     
     ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'K', 'S'].forEach(l => {
-      const colInput = document.getElementById('col' + l);
-      if (colInput) COLORS[l] = colInput.value;
+      const colSel = document.getElementById('col' + l);
+      if (colSel) COLORS[l] = colSel.value;
     });
 
     if(!isNaN(lat) && !isNaN(lng)) { updateAPos(lat, lng); if(map) map.setCenter({lat, lng}); }
