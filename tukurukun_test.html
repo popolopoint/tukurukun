@@ -3,9 +3,8 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-<title>コース作るくん v8.1.4 by Popolo App.com</title>
+<title>コース作るくん v8.1.5 by Popolo App.com</title>
 <style>
-:root{ --red:#ff3b30; --blue:#0000ff; --yellow:#ffff00; --green:#28a745; --purple:#6a1b9a; --orange:#f57c00; --gray:#555; --navy:#000080; --pink:#ff2d55; --teal:#5ac8fa; --cyan:#00bfff; }
 body { font-family: -apple-system,BlinkMacSystemFont,"Helvetica Neue","Hiragino Kaku Gothic ProN","メイリオ",Meiryo,sans-serif; margin:10px; color:#222; overflow-x: hidden; }
 h2 { margin:0 0 8px 0; font-size:18px; }
 
@@ -21,15 +20,15 @@ h2 { margin:0 0 8px 0; font-size:18px; }
 
 .main-buttons { display: grid; grid-template-columns: 1fr 1fr 0.8fr 0.8fr; gap: 6px; width: 100%; margin: 10px 0; }
 .main-buttons button { font-size: 16px; padding: 12px 2px; border-radius: 10px; border: none; color: white; cursor: pointer; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.16); display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.2; }
-#btnSendSuisin { background: var(--cyan); color: #fff; }
-#btnShareAll { background: var(--gray); }
-#btnStarboard { background: var(--green); }
-#btnPort { background: var(--orange); }
+#btnSendSuisin { background: #00bfff; color: #fff; }
+#btnShareAll { background: #555555; }
+#btnStarboard { background: #28a745; }
+#btnPort { background: #f57c00; }
 
 #inputsMode { margin:15px 0; padding:12px; background:#f0f7ff; border-radius:8px; font-size: 16px; color:#333; border:1px solid #d0e0f0; }
 #inputsMode select { font-size: 22px; padding: 5px; margin: 0 5px; }
 .radio-group { margin: 10px 0; display: flex; gap: 15px; align-items: center; }
-#btnSetCurrent { background: var(--red); color:white; border:none; padding:10px 15px; border-radius:6px; font-weight:bold; margin-top:10px; width:100%; font-size:18px; }
+#btnSetCurrent { background: #ff3b30; color:white; border:none; padding:10px 15px; border-radius:6px; font-weight:bold; margin-top:10px; width:100%; font-size:18px; }
 
 #mapContainer { position: relative; width: 100%; margin-top: 10px; }
 #map { width:100%; height:450px; border-radius:8px; box-shadow:0 1px 4px rgba(0,0,0,0.2); transition: height 0.3s ease; }
@@ -37,7 +36,7 @@ h2 { margin:0 0 8px 0; font-size:18px; }
 #btnMapResize { position: absolute; top: 10px; right: 10px; z-index: 50; background: rgba(255,255,255,0.9); border: 1px solid #ccc; padding: 8px 12px; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
 
 #coordsContainer { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; justify-content: space-between; }
-.pointBox { border-radius:50%; width:40px; height:40px; display:flex; justify-content:center; align-items:center; color:white; font-weight:bold; cursor:pointer; font-size: 0.9em; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+.pointBox { border-radius:50%; width:40px; height:40px; display:flex; justify-content:center; align-items:center; color:white; font-weight:bold; cursor:pointer; font-size: 0.9em; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); box-shadow: 0 2px 4px rgba(0,0,0,0.2); border: 1px solid #ccc; box-sizing: border-box; }
 
 .sub-button-row { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
 .btn-sub { background:#f8f8f8; border:1px solid #ccc; padding:6px 10px; border-radius:6px; font-size:12px; cursor:pointer; font-weight: bold; color: #444; }
@@ -48,7 +47,7 @@ h2 { margin:0 0 8px 0; font-size:18px; }
 .modal-input-group { margin-bottom:15px; }
 .modal-input-group label { display:block; font-size:12px; font-weight:bold; margin-bottom:4px; }
 .modal-input-group input { width:100%; font-size:20px; padding:8px; box-sizing:border-box; border-radius:6px; border:1px solid #ccc; }
-.modal-close-btn { background:var(--blue); color:white; border:none; padding:12px; border-radius:8px; width:100%; font-size:18px; font-weight:bold; margin-top: 10px; }
+.modal-close-btn { background:#0000ff; color:white; border:none; padding:12px; border-radius:8px; width:100%; font-size:18px; font-weight:bold; margin-top: 10px; }
 
 .dist-list { list-style: none; padding: 0; margin: 0; }
 .dist-item { background: #f9f9f9; padding: 10px; border-bottom: 1px solid #eee; font-size: 15px; font-weight: bold; }
@@ -60,7 +59,7 @@ h2 { margin:0 0 8px 0; font-size:18px; }
 </head>
 <body>
 
-<h2>コース作るくん <span style="font-size:0.7em;">v8.1.4 by Popolo App.com</span></h2>
+<h2>コース作るくん <span style="font-size:0.7em;">v8.1.5 by Popolo App.com</span></h2>
 
 <div class="input-row">
   <div class="input-group"><label>風向</label><input type="number" id="wind" step="any" placeholder="0"></div>
@@ -163,14 +162,14 @@ h2 { margin:0 0 8px 0; font-size:18px; }
       <label>各マークの色設定</label>
       <div class="color-picker-grid">
         <div class="color-picker-item">A <input type="color" id="colA" value="#ff3b30"></div>
-        <div class="color-picker-item">B <input type="color" id="colB" value="#0000ff"></div>
-        <div class="color-picker-item">C <input type="color" id="colC" value="#ffff00"></div>
-        <div class="color-picker-item">D <input type="color" id="colD" value="#28a745"></div>
-        <div class="color-picker-item">E <input type="color" id="colE" value="#6a1b9a"></div>
-        <div class="color-picker-item">F <input type="color" id="colF" value="#ff2d55"></div>
-        <div class="color-picker-item">G <input type="color" id="colG" value="#000080"></div>
-        <div class="color-picker-item">K <input type="color" id="colK" value="#5ac8fa"></div>
-        <div class="color-picker-item">S <input type="color" id="colS" value="#0000ff"></div>
+        <div class="color-picker-item">B <input type="color" id="colB" value="#ffff00"></div>
+        <div class="color-picker-item">C <input type="color" id="colC" value="#f57c00"></div>
+        <div class="color-picker-item">D <input type="color" id="colD" value="#ff2d55"></div>
+        <div class="color-picker-item">E <input type="color" id="colE" value="#32cd32"></div>
+        <div class="color-picker-item">F <input type="color" id="colF" value="#0000ff"></div>
+        <div class="color-picker-item">G <input type="color" id="colG" value="#6a1b9a"></div>
+        <div class="color-picker-item">K <input type="color" id="colK" value="#ffffff"></div>
+        <div class="color-picker-item">S <input type="color" id="colS" value="#000000"></div>
       </div>
     </div>
     
@@ -191,7 +190,8 @@ h2 { margin:0 0 8px 0; font-size:18px; }
 <script>
 let map, circles={}, markersLabel={}, polylines=[];
 let points = {A:null,B:null,C:null,D:null,E:null,F:null,G:null,S:null,K:null};
-let COLORS = { A:'#ff3b30', B:'#0000ff', C:'#ffff00', D:'#28a745', E:'#6a1b9a', F:'#ff2d55', G:'#000080', S:'#0000ff', K:'#5ac8fa' };
+// 赤, 黄色, オレンジ, ピンク, 黄緑, 青, 紫, 白, 黒 をデフォルトにマッピング
+let COLORS = { A:'#ff3b30', B:'#ffff00', C:'#f57c00', D:'#ff2d55', E:'#32cd32', F:'#0000ff', G:'#6a1b9a', K:'#ffffff', S:'#000000' };
 let currentIsPort = true;
 let path = [];
 
@@ -280,7 +280,7 @@ function getPointsStructure(baseA, wind, dist, theta, course, isPort) {
         is5J = (course==='5jibe'), isF8 = (course==='figure8');
 
   if(isS){
-    const dAS = 100;
+    const dAS = 100; // ソーセージ設定のAS距離デフォルト
     const sAng = parseFloat(document.getElementById('sAngle').value) || 0;
     const bS = wind + (isPort ? (90 + theta + sAng) : (270 - theta - sAng));
     p.S = movePoint(p.A.lat, p.A.lng, dAS, bS);
@@ -326,7 +326,7 @@ function getContrastColor(hexColor) {
   const g = parseInt(hexColor.slice(3, 5), 16);
   const b = parseInt(hexColor.slice(5, 7), 16);
   const yiq = ((r * 299) + (g * 587) + (b * 114)) / 1000;
-  return (yiq >= 140) ? '#000000' : '#ffffff';
+  return (yiq >= 150) ? '#000000' : '#ffffff';
 }
 
 function calculateCourse(isPort){
@@ -476,6 +476,8 @@ window.addEventListener('load', ()=>{
     
     if (navigator.share) navigator.share({ text: t }).catch(() => {}); else alert(t);
   };
+
+  document.getElementById('btnShareAll').addEventListener('touchstart', () => {}, {passive: true});
 
   document.getElementById('btnSetCurrent').onclick = () => { 
     const mode = document.querySelector('input[name="aMode"]:checked').value; 
