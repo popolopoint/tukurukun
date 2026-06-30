@@ -528,7 +528,7 @@ function generateSuisinTestUrl() {
   const encodedData = generateCourseDataParam();
   if (!encodedData) return null;
   // test.htmlを開く
-  return `test.html?course_data=${encodedData}`;
+  return `suisin_test.html?course_data=${encodedData}`;
 }
 
 window.addEventListener('load', ()=>{ 
